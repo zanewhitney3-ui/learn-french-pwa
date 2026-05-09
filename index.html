@@ -2252,7 +2252,9 @@
             q.options.forEach((option, index) => {
                 html += `<button class="option-btn" onclick="answerQuestion(${index})">${option}</button>`;
             });
-            html += '</div></div>';
+            html += '</div>';
+            html += '<div id="quizNextWrapper" style="margin-top: 20px; text-align: center;"></div>';
+            html += '</div>';
 
             document.getElementById('quizContainer').innerHTML = html;
 
@@ -2278,15 +2280,31 @@
                 btn.disabled = true;
             });
 
-            if (selectedIndex === q.correct) {
+            const isCorrect = selectedIndex === q.correct;
+            if (isCorrect) {
                 quizScore++;
                 if (typeof Progress !== 'undefined') Progress.addXP(10);
             }
 
-            setTimeout(() => {
-                currentQuizQuestion++;
-                displayQuizQuestion();
-            }, 1500);
+            const isLast = currentQuizQuestion >= quizQuestions.length - 1;
+            const wrapper = document.getElementById('quizNextWrapper');
+            if (wrapper) {
+                const feedbackColor = isCorrect ? '#2e7d32' : '#c62828';
+                const feedbackText = isCorrect ? '✓ Correct!' : `✗ Correct answer: ${q.options[q.correct]}`;
+                wrapper.innerHTML = `
+                    <div style="color: ${feedbackColor}; font-weight: 600; font-size: 1.05em; margin-bottom: 14px;">
+                        ${feedbackText}
+                    </div>
+                    <button class="btn btn-primary" onclick="advanceQuiz()" style="font-size: 1.05em; padding: 14px 36px;">
+                        ${isLast ? 'See Score →' : 'Next Question →'}
+                    </button>
+                `;
+            }
+        }
+
+        function advanceQuiz() {
+            currentQuizQuestion++;
+            displayQuizQuestion();
         }
 
         function displayQuizResults() {

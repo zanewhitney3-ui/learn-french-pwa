@@ -873,6 +873,85 @@
             align-items: center;
             gap: 8px;
         }
+
+        /* Floating speech-rate control */
+        .speed-control {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 2px solid #002395;
+            border-radius: 30px;
+            padding: 4px 6px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            z-index: 50;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            font-size: 0.85em;
+            padding-bottom: max(4px, env(safe-area-inset-bottom));
+        }
+        .speed-control .speed-icon {
+            padding: 0 6px 0 8px;
+            font-size: 1em;
+            color: #002395;
+        }
+        .speed-control .speed-btn {
+            background: transparent;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 1em;
+            color: #002395;
+            transition: background 0.15s, color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .speed-control .speed-btn.active {
+            background: linear-gradient(135deg, #002395 0%, #1a3a8f 100%);
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .speed-control {
+                bottom: 14px;
+                left: 14px;
+                font-size: 0.8em;
+            }
+            .speed-control .speed-btn { padding: 5px 8px; }
+        }
+
+        /* Quiz mode dropdown spacing */
+        .quiz-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .quiz-controls select {
+            padding: 10px 16px;
+            border: 2px solid #002395;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: white;
+            color: #002395;
+        }
+        .listen-quiz-player {
+            text-align: center;
+            margin: 15px 0 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            border-radius: 12px;
+            color: white;
+        }
+        .listen-quiz-player p {
+            margin-top: 10px;
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -886,18 +965,18 @@
                 <div class="header-stats">
                     <div class="stat-box">
                         <div class="stat-label">Topics Completed</div>
-                        <div class="stat-value" id="completedTopics">12</div>
+                        <div class="stat-value" id="completedTopics">0</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-label">Total XP</div>
-                        <div class="stat-value" id="totalXP">450</div>
+                        <div class="stat-value" id="totalXP">0</div>
                     </div>
                     <div class="stat-box">
                         <div class="streak-counter">
                             <span>🔥</span>
                             <div>
                                 <div class="stat-label">Daily Streak</div>
-                                <div class="stat-value" id="streakCount">7</div>
+                                <div class="stat-value" id="streakCount">0</div>
                             </div>
                         </div>
                     </div>
@@ -1014,8 +1093,8 @@
             <div id="quiz" class="section">
                 <h2 style="color: #002395; margin-bottom: 20px;">📝 Quiz</h2>
 
-                <div class="button-group">
-                    <select id="quizTopic" style="padding: 10px 20px; border: 2px solid #002395; border-radius: 8px; font-size: 1em;">
+                <div class="quiz-controls">
+                    <select id="quizTopic">
                         <option value="greetings">Greetings</option>
                         <option value="family">Family</option>
                         <option value="food">Food</option>
@@ -1028,6 +1107,10 @@
                         <option value="weather">Weather</option>
                         <option value="professions">Professions</option>
                         <option value="home_furniture">Home & Furniture</option>
+                    </select>
+                    <select id="quizMode" aria-label="Quiz mode">
+                        <option value="standard">Multiple choice</option>
+                        <option value="listen">🔊 Listen → choose meaning</option>
                     </select>
                     <button class="btn btn-primary" onclick="startQuiz()">Start Quiz</button>
                 </div>
@@ -1650,46 +1733,46 @@
 
                 <div class="progress-section">
                     <div class="progress-card">
-                        <div class="progress-label">Topics Completed</div>
-                        <div class="progress-value">12</div>
+                        <div class="progress-label">Topics Started</div>
+                        <div class="progress-value">0</div>
                         <div class="progress-bar">
-                            <div class="progress-bar-fill" style="width: 100%;"></div>
+                            <div class="progress-bar-fill" style="width: 0%;"></div>
                         </div>
-                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">All topics unlocked!</p>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">0 of 12 topics</p>
                     </div>
                     <div class="progress-card">
                         <div class="progress-label">Total XP Earned</div>
-                        <div class="progress-value">450</div>
+                        <div class="progress-value">0</div>
                         <div class="progress-bar">
-                            <div class="progress-bar-fill" style="width: 45%;"></div>
+                            <div class="progress-bar-fill" style="width: 0%;"></div>
                         </div>
-                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">45% to next level</p>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">0 / 1000 XP to next level</p>
                     </div>
                     <div class="progress-card">
-                        <div class="progress-label">Vocabulary Learned</div>
-                        <div class="progress-value">156</div>
+                        <div class="progress-label">Vocabulary Heard</div>
+                        <div class="progress-value">0</div>
                         <div class="progress-bar">
-                            <div class="progress-bar-fill" style="width: 65%;"></div>
+                            <div class="progress-bar-fill" style="width: 0%;"></div>
                         </div>
-                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">65% of total vocab</p>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">0% of total vocab</p>
                     </div>
                     <div class="progress-card">
-                        <div class="progress-label">Quizzes Passed</div>
-                        <div class="progress-value">24</div>
+                        <div class="progress-label">Quizzes Completed</div>
+                        <div class="progress-value">0</div>
                         <div class="progress-bar">
-                            <div class="progress-bar-fill" style="width: 80%;"></div>
+                            <div class="progress-bar-fill" style="width: 0%;"></div>
                         </div>
-                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">80% success rate</p>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">0 / 30 quiz goal</p>
                     </div>
                 </div>
 
                 <div style="background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border: 2px solid #002395; border-radius: 12px; padding: 30px; text-align: center; margin-top: 30px;">
                     <h3 style="color: #002395; margin-bottom: 15px;">🎯 Next Goal</h3>
-                    <p style="color: #666; font-size: 1.1em; margin-bottom: 20px;">Complete 5 more quizzes to reach 29 and unlock the Achievement Badge!</p>
+                    <p style="color: #666; font-size: 1.1em; margin-bottom: 20px;">Complete 30 quizzes to hit your goal.</p>
                     <div class="progress-bar" style="max-width: 400px; margin: 0 auto;">
-                        <div class="progress-bar-fill" style="width: 80%;"></div>
+                        <div class="progress-bar-fill" style="width: 0%;"></div>
                     </div>
-                    <p style="color: #666; font-size: 0.9em; margin-top: 10px;">4 of 5 quizzes completed</p>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 10px;">0 of 30 quizzes completed</p>
                 </div>
 
                 <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
@@ -1707,6 +1790,13 @@
     </div>
 
     <button class="scroll-to-top" id="scrollBtn" onclick="scrollToTop()">↑</button>
+
+    <div class="speed-control" id="speedControl" role="group" aria-label="Pronunciation speed">
+        <span class="speed-icon" aria-hidden="true">🔊</span>
+        <button class="speed-btn" data-rate="0.6" onclick="setSpeechRate(0.6)" title="Slow" aria-label="Slow speech">🐢</button>
+        <button class="speed-btn active" data-rate="0.88" onclick="setSpeechRate(0.88)" title="Normal" aria-label="Normal speech">🚶</button>
+        <button class="speed-btn" data-rate="1.1" onclick="setSpeechRate(1.1)" title="Fast" aria-label="Fast speech">🏃</button>
+    </div>
 
     <script>
         // Vocabulary Data - All Topics
@@ -1990,6 +2080,7 @@
 
         function showLesson(topicId) {
             currentTopic = topicId;
+            if (typeof Progress !== 'undefined') Progress.markTopicStudied(topicId);
             const content = document.getElementById('lessonContent');
             const vocab = vocabularyData[topicId] || [];
 
@@ -2099,10 +2190,32 @@
             displayFlashcard();
         }
 
+        function buildListenQuiz(topic) {
+            const vocab = vocabularyData[topic] || [];
+            if (vocab.length < 4) return [];
+            const shuffled = [...vocab].sort(() => Math.random() - 0.5);
+            const count = Math.min(6, vocab.length);
+            return shuffled.slice(0, count).map(item => {
+                const wrongs = vocab
+                    .filter(v => v.fr !== item.fr)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3)
+                    .map(v => v.en);
+                const options = [...wrongs, item.en].sort(() => Math.random() - 0.5);
+                return {
+                    audioText: item.fr,
+                    question: 'Listen and choose the meaning:',
+                    options: options,
+                    correct: options.indexOf(item.en)
+                };
+            });
+        }
+
         function startQuiz() {
             const topic = document.getElementById('quizTopic').value;
+            const mode = (document.getElementById('quizMode') || {}).value || 'standard';
             currentTopic = topic;
-            quizQuestions = quizData[topic] || [];
+            quizQuestions = mode === 'listen' ? buildListenQuiz(topic) : (quizData[topic] || []);
             currentQuizQuestion = 0;
             quizScore = 0;
             displayQuizQuestion();
@@ -2123,19 +2236,33 @@
                 </div>
                 <div class="question">
                     <h3>${q.question}</h3>
-                    <div class="options">
             `;
 
+            if (q.audioText) {
+                const fr = escapeFr(q.audioText);
+                html += `
+                    <div class="listen-quiz-player">
+                        <button class="speak-btn speak-btn-flashcard" onclick="speak('${fr}', this)" aria-label="Replay French word">🔊 Play Word</button>
+                        <p>Tap to replay as many times as you need.</p>
+                    </div>
+                `;
+            }
+
+            html += '<div class="options">';
             q.options.forEach((option, index) => {
                 html += `<button class="option-btn" onclick="answerQuestion(${index})">${option}</button>`;
             });
-
-            html += `
-                    </div>
-                </div>
-            `;
+            html += '</div></div>';
 
             document.getElementById('quizContainer').innerHTML = html;
+
+            // Auto-play the audio for listen-mode questions
+            if (q.audioText) {
+                setTimeout(() => {
+                    const btn = document.querySelector('#quizContainer .speak-btn-flashcard');
+                    speak(q.audioText, btn);
+                }, 350);
+            }
         }
 
         function answerQuestion(selectedIndex) {
@@ -2153,6 +2280,7 @@
 
             if (selectedIndex === q.correct) {
                 quizScore++;
+                if (typeof Progress !== 'undefined') Progress.addXP(10);
             }
 
             setTimeout(() => {
@@ -2164,6 +2292,11 @@
         function displayQuizResults() {
             const total = quizQuestions.length;
             const percentage = Math.round((quizScore / total) * 100);
+            if (typeof Progress !== 'undefined' && total > 0) {
+                Progress.incrementQuizzesPassed();
+                Progress.addXP(5);
+                Progress.markTopicStudied(currentTopic);
+            }
 
             let message = '';
             if (percentage === 100) {
@@ -2229,12 +2362,36 @@
             speechSynthesis.onvoiceschanged = loadFrenchVoice;
         }
 
+        // Speech rate (persisted)
+        let speechRate = 0.88;
+        try {
+            const saved = parseFloat(localStorage.getItem('speechRate'));
+            if (!isNaN(saved) && saved >= 0.4 && saved <= 1.5) speechRate = saved;
+        } catch(e) {}
+
+        function setSpeechRate(r) {
+            speechRate = r;
+            try { localStorage.setItem('speechRate', String(r)); } catch(e) {}
+            document.querySelectorAll('.speed-control .speed-btn').forEach(b => {
+                b.classList.toggle('active', Math.abs(parseFloat(b.dataset.rate) - r) < 0.01);
+            });
+        }
+
+        // Build a fast lookup of all vocab terms for progress tracking
+        const VOCAB_TERMS = (() => {
+            const set = new Set();
+            for (const topic in vocabularyData) {
+                vocabularyData[topic].forEach(v => set.add(v.fr));
+            }
+            return set;
+        })();
+
         function speak(text, btn) {
             if (!text || typeof speechSynthesis === 'undefined') return;
             try { speechSynthesis.cancel(); } catch(e) {}
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'fr-FR';
-            utter.rate = 0.88;
+            utter.rate = speechRate;
             utter.pitch = 1;
             if (frenchVoice) utter.voice = frenchVoice;
             if (btn) {
@@ -2245,6 +2402,10 @@
                 utter.onerror = cleanup;
             }
             speechSynthesis.speak(utter);
+            // Track vocab heard for progress
+            if (typeof Progress !== 'undefined' && VOCAB_TERMS.has(text)) {
+                Progress.markVocabSeen(text);
+            }
         }
 
         // Escape French text for embedding in an HTML onclick attribute (single-quoted JS string)
@@ -2363,7 +2524,7 @@
         if ('serviceWorker' in navigator) {
             // Create service worker from inline blob
             const swCode = `
-                const CACHE_NAME = 'learn-french-v2';
+                const CACHE_NAME = 'learn-french-v3';
                 const OFFLINE_URL = '/';
 
                 self.addEventListener('install', (event) => {
@@ -2449,37 +2610,134 @@
             }
         }
 
-        // Persist data using localStorage
-        function saveProgress() {
-            const data = { xp: totalXP, streak: streak, completedTopics: Array.from(completedTopics || []) };
-            try { localStorage.setItem('learnFrenchProgress', JSON.stringify(data)); } catch(e) {}
-        }
+        // ═══════════════════════════════════════════════════════
+        // Real progress tracking (replaces hardcoded counters)
+        // ═══════════════════════════════════════════════════════
+        const TOTAL_TOPICS = 12;
+        const QUIZ_GOAL = 30;
+        const XP_PER_LEVEL = 1000;
 
-        function loadProgress() {
-            try {
-                const data = JSON.parse(localStorage.getItem('learnFrenchProgress'));
-                if (data) {
-                    totalXP = data.xp || 0;
-                    streak = data.streak || 1;
-                    if (data.completedTopics) completedTopics = new Set(data.completedTopics);
-                    updateStats();
+        const Progress = {
+            state: {
+                xp: 0,
+                streak: 0,
+                lastActive: null,
+                completedTopics: [],
+                vocabSeen: [],
+                quizzesPassed: 0
+            },
+            load() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('learnFrenchProgress') || '{}');
+                    Object.assign(this.state, saved);
+                } catch(e) {}
+                if (!Array.isArray(this.state.completedTopics)) this.state.completedTopics = [];
+                if (!Array.isArray(this.state.vocabSeen)) this.state.vocabSeen = [];
+                this.tickStreak();
+                this.render();
+            },
+            save() {
+                try { localStorage.setItem('learnFrenchProgress', JSON.stringify(this.state)); } catch(e) {}
+            },
+            tickStreak() {
+                const today = new Date().toISOString().slice(0, 10);
+                const last = this.state.lastActive;
+                if (last === today) return;
+                const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+                if (last === yesterday) {
+                    this.state.streak = (this.state.streak || 0) + 1;
+                } else {
+                    this.state.streak = 1;
                 }
-            } catch(e) {}
-        }
+                this.state.lastActive = today;
+                this.save();
+            },
+            addXP(n) {
+                this.state.xp = (this.state.xp || 0) + n;
+                this.save();
+                this.render();
+            },
+            markTopicStudied(topic) {
+                if (!this.state.completedTopics.includes(topic)) {
+                    this.state.completedTopics.push(topic);
+                    this.state.xp = (this.state.xp || 0) + 5;
+                    this.save();
+                    this.render();
+                }
+            },
+            markVocabSeen(fr) {
+                if (!fr) return;
+                if (!this.state.vocabSeen.includes(fr)) {
+                    this.state.vocabSeen.push(fr);
+                    this.state.xp = (this.state.xp || 0) + 1;
+                    this.save();
+                    this.render();
+                }
+            },
+            incrementQuizzesPassed() {
+                this.state.quizzesPassed = (this.state.quizzesPassed || 0) + 1;
+                this.save();
+                this.render();
+            },
+            render() {
+                const totalVocab = Object.values(vocabularyData).reduce((s, t) => s + t.length, 0);
+                const completed = this.state.completedTopics.length;
+                const xp = this.state.xp;
+                const streak = this.state.streak;
+                const seen = this.state.vocabSeen.length;
+                const passed = this.state.quizzesPassed;
 
-        // Save on XP changes
-        const origAddXP = typeof addXP === 'function' ? addXP : null;
-        if (origAddXP) {
-            window._origAddXP = origAddXP;
-        }
+                // Header
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+                set('completedTopics', completed);
+                set('totalXP', xp);
+                set('streakCount', streak);
 
-        // Auto-save periodically
-        setInterval(saveProgress, 30000);
-        window.addEventListener('beforeunload', saveProgress);
-        window.addEventListener('pagehide', saveProgress);
+                // Progress section cards (4 cards in fixed order)
+                const cards = document.querySelectorAll('#progress .progress-card');
+                if (cards.length >= 4) {
+                    const data = [
+                        { value: completed, pct: (completed / TOTAL_TOPICS) * 100,
+                          label: completed === TOTAL_TOPICS ? 'All topics started!' : `${completed} of ${TOTAL_TOPICS} topics` },
+                        { value: xp, pct: ((xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100,
+                          label: `${xp % XP_PER_LEVEL} / ${XP_PER_LEVEL} XP to next level` },
+                        { value: seen, pct: totalVocab ? (seen / totalVocab) * 100 : 0,
+                          label: totalVocab ? `${Math.round((seen / totalVocab) * 100)}% of total vocab` : '' },
+                        { value: passed, pct: Math.min(100, (passed / QUIZ_GOAL) * 100),
+                          label: `${passed} / ${QUIZ_GOAL} quiz goal` }
+                    ];
+                    cards.forEach((card, i) => {
+                        const d = data[i];
+                        const v = card.querySelector('.progress-value');
+                        const fill = card.querySelector('.progress-bar-fill');
+                        const p = card.querySelector('p');
+                        if (v) v.textContent = d.value;
+                        if (fill) fill.style.width = d.pct + '%';
+                        if (p) p.textContent = d.label;
+                    });
+                }
 
-        // Load saved progress
-        loadProgress();
+                // "Next Goal" sub-section
+                const remaining = Math.max(0, QUIZ_GOAL - passed);
+                const goalText = document.querySelector('#progress > div:nth-of-type(2) p:first-of-type');
+                if (goalText) {
+                    goalText.textContent = remaining === 0
+                        ? `🎉 You hit the ${QUIZ_GOAL}-quiz goal! Keep going to set a new record.`
+                        : `Complete ${remaining} more quiz${remaining === 1 ? '' : 'zes'} to reach the goal of ${QUIZ_GOAL}.`;
+                }
+                const goalBar = document.querySelector('#progress > div:nth-of-type(2) .progress-bar-fill');
+                if (goalBar) goalBar.style.width = Math.min(100, (passed / QUIZ_GOAL) * 100) + '%';
+                const goalSub = document.querySelector('#progress > div:nth-of-type(2) p:last-of-type');
+                if (goalSub) goalSub.textContent = `${passed} of ${QUIZ_GOAL} quizzes completed`;
+            }
+        };
+
+        Progress.load();
+        window.addEventListener('beforeunload', () => Progress.save());
+        window.addEventListener('pagehide', () => Progress.save());
+
+        // Sync speed control to saved rate
+        setSpeechRate(speechRate);
 
         // Trigger iOS install banner check
         showIOSInstallPrompt();

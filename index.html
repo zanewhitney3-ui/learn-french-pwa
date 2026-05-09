@@ -762,6 +762,117 @@
         .scroll-to-top.show {
             display: flex;
         }
+
+        /* Pronunciation (Web Speech API) */
+        .speak-btn {
+            background: linear-gradient(135deg, #002395 0%, #1a3a8f 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            cursor: pointer;
+            font-size: 0.95em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+            vertical-align: middle;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 6px rgba(0, 35, 149, 0.25);
+        }
+        .speak-btn:hover, .speak-btn:active {
+            transform: scale(1.1);
+            box-shadow: 0 4px 14px rgba(0, 35, 149, 0.4);
+        }
+        .speak-btn.speaking {
+            background: linear-gradient(135deg, #E1000F 0%, #ff3344 100%);
+            animation: speakerPulse 0.7s ease-in-out infinite;
+        }
+        @keyframes speakerPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 2px 6px rgba(225, 0, 15, 0.4); }
+            50% { transform: scale(1.18); box-shadow: 0 6px 18px rgba(225, 0, 15, 0.6); }
+        }
+        .speak-btn-small {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            font-size: 0.75em;
+            margin-left: 6px;
+        }
+        .speak-btn-flashcard {
+            width: auto;
+            min-width: 0;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1em;
+            font-weight: 600;
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            gap: 8px;
+        }
+        .speak-btn-flashcard:hover, .speak-btn-flashcard:active {
+            background: rgba(255, 255, 255, 0.32);
+        }
+        .speak-btn-number {
+            background: rgba(255, 255, 255, 0.22);
+            box-shadow: none;
+            margin-top: 8px;
+        }
+        .speak-btn-number:hover, .speak-btn-number:active {
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Make French text feel tappable */
+        .phrase-french, .number-french, .grammar-example-fr, .vocab-french, .flashcard-text {
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0, 35, 149, 0.1);
+        }
+
+        .phrase-french-row, .grammar-example-fr-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .phrase-french-row .phrase-french,
+        .grammar-example-fr-row .grammar-example-fr {
+            margin-bottom: 0;
+            flex: 1;
+        }
+        .vocab-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .vocab-header-row > div:first-child { flex: 1; min-width: 0; }
+        .vocab-example-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .vocab-example-row .vocab-example { flex: 1; margin-top: 0; }
+        .number-card .speak-btn-number { display: inline-flex; }
+
+        .audio-hint {
+            background: linear-gradient(135deg, #e8f0ff 0%, #f0f4ff 100%);
+            border-left: 4px solid #002395;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.92em;
+            color: #002395;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1882,16 +1993,29 @@
             const content = document.getElementById('lessonContent');
             const vocab = vocabularyData[topicId] || [];
 
-            let html = '<h3 style="color: #002395; margin-bottom: 20px;">📖 Vocabulary</h3>';
+            let html = '<h3 style="color: #002395; margin-bottom: 12px;">📖 Vocabulary</h3>';
+            html += '<div class="audio-hint">🔊 Tap the speaker (or the French word itself) to hear it pronounced.</div>';
             html += '<div class="vocabulary-list">';
 
             vocab.forEach(item => {
+                const fr = escapeFr(item.fr);
+                const ex = escapeFr(item.example);
                 html += `
                     <div class="vocab-item">
-                        <div class="vocab-french">${item.fr}</div>
-                        <div class="vocab-english">${item.en}</div>
-                        <div class="vocab-phonetic">${item.phonetic}</div>
-                        <div class="vocab-example">"${item.example}"</div>
+                        <div class="vocab-header-row">
+                            <div>
+                                <div class="vocab-french">${item.fr}</div>
+                                <div class="vocab-english">${item.en}</div>
+                                <div class="vocab-phonetic">${item.phonetic}</div>
+                            </div>
+                            <button class="speak-btn" aria-label="Listen to pronunciation"
+                                    onclick="speak('${fr}', this)">🔊</button>
+                        </div>
+                        <div class="vocab-example-row" style="margin-top:10px;">
+                            <div class="vocab-example">"${item.example}"</div>
+                            <button class="speak-btn speak-btn-small" aria-label="Listen to example"
+                                    onclick="speak('${ex}', this)">🔊</button>
+                        </div>
                     </div>
                 `;
             });
@@ -1904,21 +2028,26 @@
             const topic = document.getElementById('flashcardTopic').value;
             currentTopic = topic;
             currentFlashcardIndex = 0;
+            flashcardAutoSpeak = false;
             displayFlashcard();
         }
+
+        let flashcardAutoSpeak = false;
 
         function displayFlashcard() {
             const vocab = vocabularyData[currentTopic] || [];
             if (vocab.length === 0) return;
 
             const item = vocab[currentFlashcardIndex];
-            let isFlipped = false;
+            const fr = escapeFr(item.fr);
 
             const container = document.getElementById('flashcardContainer');
             container.innerHTML = `
                 <div class="flashcard" onclick="flipCard(this)">
-                    <div class="flashcard-label">Click to reveal</div>
+                    <div class="flashcard-label">Tap card to reveal — tap 🔊 to hear it</div>
                     <div class="flashcard-text">${item.fr}</div>
+                    <button class="speak-btn speak-btn-flashcard" aria-label="Listen to pronunciation"
+                            onclick="event.stopPropagation(); speak('${fr}', this)">🔊 Listen</button>
                 </div>
                 <div class="button-group" style="margin-top: 20px;">
                     <button class="btn btn-secondary" onclick="previousFlashcard()">← Previous</button>
@@ -1926,6 +2055,15 @@
                     <button class="btn btn-secondary" onclick="nextFlashcard()">Next →</button>
                 </div>
             `;
+
+            // Auto-speak the French word when the user navigates between cards
+            // (skip on initial section load so it doesn't surprise them)
+            if (flashcardAutoSpeak) {
+                setTimeout(() => {
+                    const btn = container.querySelector('.speak-btn-flashcard');
+                    speak(item.fr, btn);
+                }, 200);
+            }
         }
 
         function flipCard(element) {
@@ -1933,27 +2071,31 @@
             const item = vocab[currentFlashcardIndex];
             const text = element.querySelector('.flashcard-text');
             const label = element.querySelector('.flashcard-label');
+            const speakBtn = element.querySelector('.speak-btn-flashcard');
 
             if (text.textContent === item.fr) {
                 text.textContent = item.en;
-                label.textContent = 'Pronunciation: ' + item.phonetic;
+                label.textContent = 'Pronunciation: ' + item.phonetic + ' — tap 🔊 to hear French';
                 element.classList.add('flip');
             } else {
                 text.textContent = item.fr;
-                label.textContent = 'Click to reveal';
+                label.textContent = 'Tap card to reveal — tap 🔊 to hear it';
                 element.classList.remove('flip');
+                speak(item.fr, speakBtn);
             }
         }
 
         function nextFlashcard() {
             const vocab = vocabularyData[currentTopic];
             currentFlashcardIndex = (currentFlashcardIndex + 1) % vocab.length;
+            flashcardAutoSpeak = true;
             displayFlashcard();
         }
 
         function previousFlashcard() {
             const vocab = vocabularyData[currentTopic];
             currentFlashcardIndex = (currentFlashcardIndex - 1 + vocab.length) % vocab.length;
+            flashcardAutoSpeak = true;
             displayFlashcard();
         }
 
@@ -2067,6 +2209,148 @@
                 behavior: 'smooth'
             });
         }
+
+        // ═══════════════════════════════════════════════════════
+        // Pronunciation (Web Speech API)
+        // ═══════════════════════════════════════════════════════
+        let frenchVoice = null;
+        function loadFrenchVoice() {
+            if (typeof speechSynthesis === 'undefined') return;
+            const voices = speechSynthesis.getVoices();
+            // Prefer high-quality French voices when available
+            frenchVoice =
+                voices.find(v => v.lang === 'fr-FR' && /thomas|amelie|amélie|aurelie|audrey/i.test(v.name)) ||
+                voices.find(v => v.lang === 'fr-FR') ||
+                voices.find(v => v.lang && v.lang.toLowerCase().startsWith('fr')) ||
+                null;
+        }
+        if (typeof speechSynthesis !== 'undefined') {
+            loadFrenchVoice();
+            speechSynthesis.onvoiceschanged = loadFrenchVoice;
+        }
+
+        function speak(text, btn) {
+            if (!text || typeof speechSynthesis === 'undefined') return;
+            try { speechSynthesis.cancel(); } catch(e) {}
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'fr-FR';
+            utter.rate = 0.88;
+            utter.pitch = 1;
+            if (frenchVoice) utter.voice = frenchVoice;
+            if (btn) {
+                document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
+                btn.classList.add('speaking');
+                const cleanup = () => btn.classList.remove('speaking');
+                utter.onend = cleanup;
+                utter.onerror = cleanup;
+            }
+            speechSynthesis.speak(utter);
+        }
+
+        // Escape French text for embedding in an HTML onclick attribute (single-quoted JS string)
+        function escapeFr(s) {
+            return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        // Delegated click handler — tap the French text anywhere to hear it
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.speak-btn')) return;
+            const el = e.target.closest('.phrase-french, .number-french, .grammar-example-fr, .vocab-french');
+            if (!el) return;
+            // Get the text without any embedded button glyphs
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('.speak-btn').forEach(b => b.remove());
+            const text = clone.textContent.trim();
+            if (text) speak(text);
+        });
+
+        // Add inline 🔊 buttons to all static French elements (phrases, numbers, grammar)
+        function decorateStaticFrenchElements() {
+            // Phrase items: wrap French line with a button
+            document.querySelectorAll('.phrase-item').forEach(item => {
+                const fr = item.querySelector('.phrase-french');
+                if (!fr || fr.dataset.decorated) return;
+                fr.dataset.decorated = '1';
+                const text = fr.textContent.trim();
+                const row = document.createElement('div');
+                row.className = 'phrase-french-row';
+                fr.parentNode.insertBefore(row, fr);
+                row.appendChild(fr);
+                const btn = document.createElement('button');
+                btn.className = 'speak-btn';
+                btn.setAttribute('aria-label', 'Listen to pronunciation');
+                btn.innerHTML = '🔊';
+                btn.onclick = function(e) { e.stopPropagation(); speak(text, btn); };
+                row.appendChild(btn);
+            });
+
+            // Number cards: speaker button under the French word
+            document.querySelectorAll('.number-card').forEach(card => {
+                const fr = card.querySelector('.number-french');
+                if (!fr || card.dataset.decorated) return;
+                card.dataset.decorated = '1';
+                const text = fr.textContent.trim();
+                const btn = document.createElement('button');
+                btn.className = 'speak-btn speak-btn-number';
+                btn.setAttribute('aria-label', 'Listen to pronunciation');
+                btn.innerHTML = '🔊';
+                btn.onclick = function(e) { e.stopPropagation(); speak(text, btn); };
+                card.appendChild(btn);
+            });
+
+            // Grammar examples and table cells: French side gets a button
+            document.querySelectorAll('.grammar-example').forEach(ex => {
+                const fr = ex.querySelector('.grammar-example-fr');
+                if (!fr || fr.dataset.decorated) return;
+                fr.dataset.decorated = '1';
+                const text = fr.textContent.trim();
+                const row = document.createElement('div');
+                row.className = 'grammar-example-fr-row';
+                fr.parentNode.insertBefore(row, fr);
+                row.appendChild(fr);
+                const btn = document.createElement('button');
+                btn.className = 'speak-btn speak-btn-small';
+                btn.setAttribute('aria-label', 'Listen to pronunciation');
+                btn.innerHTML = '🔊';
+                btn.onclick = function(e) { e.stopPropagation(); speak(text, btn); };
+                row.appendChild(btn);
+            });
+
+            // Grammar table example column (3rd cell of each row)
+            document.querySelectorAll('.grammar-table tr').forEach(tr => {
+                const cells = tr.querySelectorAll('td');
+                if (cells.length < 3 || tr.dataset.decorated) return;
+                tr.dataset.decorated = '1';
+                const exampleCell = cells[cells.length - 1];
+                const text = exampleCell.textContent.trim();
+                if (!text) return;
+                const btn = document.createElement('button');
+                btn.className = 'speak-btn speak-btn-small';
+                btn.setAttribute('aria-label', 'Listen to pronunciation');
+                btn.innerHTML = '🔊';
+                btn.style.marginLeft = '8px';
+                btn.onclick = function(e) { e.stopPropagation(); speak(text, btn); };
+                exampleCell.appendChild(btn);
+            });
+        }
+
+        // Add a small audio hint at the top of audio-rich sections
+        function addAudioHints() {
+            const targets = ['phrases', 'numbers', 'grammar'];
+            targets.forEach(id => {
+                const section = document.getElementById(id);
+                if (!section) return;
+                const h2 = section.querySelector('h2');
+                if (!h2 || section.querySelector('.audio-hint')) return;
+                const hint = document.createElement('div');
+                hint.className = 'audio-hint';
+                hint.innerHTML = '🔊 Tap any French text or speaker icon to hear it pronounced.';
+                h2.insertAdjacentElement('afterend', hint);
+            });
+        }
+
+        decorateStaticFrenchElements();
+        addAudioHints();
 
         // Initialize
         showLesson('greetings');

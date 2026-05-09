@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Learn French - Interactive Language App</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Learn French">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#002395">
+    <meta name="description" content="Interactive French language learning app with flashcards, quizzes, and more">
+
+    <!-- PWA Manifest (inline via data URI) -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkxlYXJuIEZyZW5jaCAtIFBhcmxlei1Wb3VzIEZyYW7Dp2FpcyIsIAogICJzaG9ydF9uYW1lIjogIkxlYXJuIEZyZW5jaCIsCiAgImRlc2NyaXB0aW9uIjogIkludGVyYWN0aXZlIEZyZW5jaCBsYW5ndWFnZSBsZWFybmluZyBhcHAiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2YwZjRmZiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDIzOTUiLAogICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjxyZWN0IHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyByeD0nMjAnIGZpbGw9JyMwMDIzOTUnLz48dGV4dCB4PSc1MCcgeT0nNjAnIGZvbnQtc2l6ZT0nNTAnIHRleHQtYW5jaG9yPSdtaWRkbGUnIGZpbGw9J3doaXRlJz7wn4ew77iPPC90ZXh0Pjwvc3ZnPiIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+
+    <!-- Apple Touch Icon (inline SVG as data URI) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%23002395'/><text x='90' y='115' font-size='80' text-anchor='middle' fill='white'>🇫🇷</text></svg>">
+
+    <!-- Splash screens for iOS -->
+    <meta name="apple-mobile-web-app-orientations" content="portrait">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, 'SF Pro Display', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #002395 0%, #E1000F 50%, #FFFFFF 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 10px;
+            padding-top: max(10px, env(safe-area-inset-top));
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            padding-left: max(10px, env(safe-area-inset-left));
+            padding-right: max(10px, env(safe-area-inset-right));
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        /* PWA standalone mode tweaks */
+        @media (display-mode: standalone) {
+            body { padding-top: max(20px, env(safe-area-inset-top)); }
+        }
+
+        /* PWA install banner */
+        .pwa-install-banner {
+            display: none;
+            background: linear-gradient(135deg, #002395, #1a3a8f);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            box-shadow: 0 4px 20px rgba(0,35,149,0.3);
+            position: relative;
+            z-index: 200;
+        }
+        .pwa-install-banner.show { display: block; animation: slideDown 0.4s ease-out; }
+        .pwa-install-banner p { margin-bottom: 10px; }
+        .pwa-install-banner strong { font-size: 1.05em; }
+        .pwa-install-steps {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; font-size: 0.85em; opacity: 0.9;
+        }
+        .pwa-dismiss {
+            position: absolute; top: 8px; right: 12px;
+            background: none; border: none; color: white; font-size: 1.2em;
+            cursor: pointer; opacity: 0.7; padding: 4px;
+        }
+        .pwa-dismiss:hover { opacity: 1; }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .header-title h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .header-title p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .streak-counter {
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        nav {
+            background: #f5f5f5;
+            padding: 0;
+            display: flex;
+            overflow-x: auto;
+            border-bottom: 2px solid #002395;
+        }
+
+        nav button {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        nav button:hover {
+            background: #e0e0e0;
+            color: #002395;
+        }
+
+        nav button.active {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            border-bottom: 3px solid #002395;
+        }
+
+        .content {
+            padding: 30px 20px;
+            min-height: 60vh;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .lesson-card {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 35, 149, 0.2);
+            border-color: #002395;
+        }
+
+        .lesson-emoji {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .lesson-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #002395;
+            margin-bottom: 8px;
+        }
+
+        .lesson-count {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .vocabulary-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .vocab-item {
+            background: #f9f9f9;
+            border-left: 4px solid #002395;
+            padding: 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .vocab-item:hover {
+            background: #f0f0f0;
+            box-shadow: 0 5px 15px rgba(0, 35, 149, 0.1);
+        }
+
+        .vocab-french {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #002395;
+            margin-bottom: 5px;
+        }
+
+        .vocab-english {
+            font-size: 1em;
+            color: #E1000F;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .vocab-phonetic {
+            font-size: 0.9em;
+            color: #999;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .vocab-example {
+            font-size: 0.95em;
+            color: #555;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .flashcard {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        .flashcard:hover {
+            transform: scale(1.02);
+        }
+
+        .flashcard.flip {
+            background: linear-gradient(135deg, #E1000F 0%, #002395 100%);
+        }
+
+        .flashcard-label {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 20px;
+        }
+
+        .flashcard-text {
+            font-size: 2.5em;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .question {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .question h3 {
+            color: #002395;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            border-color: #002395;
+            background: #f0f0f0;
+        }
+
+        .option-btn.correct {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        .option-btn.incorrect {
+            background: #f44336;
+            border-color: #f44336;
+            color: white;
+        }
+
+        .quiz-progress {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .quiz-progress-bar {
+            background: linear-gradient(90deg, #002395 0%, #E1000F 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .phrase-category {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .phrase-category h3 {
+            color: #002395;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phrase-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .phrase-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #E1000F;
+            transition: all 0.3s ease;
+        }
+
+        .phrase-item:hover {
+            background: #f0f0f0;
+            box-shadow: 0 5px 15px rgba(225, 0, 15, 0.1);
+        }
+
+        .phrase-french {
+            font-weight: 600;
+            color: #002395;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .phrase-english {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .numbers-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .number-card {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .number-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 35, 149, 0.3);
+        }
+
+        .number-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .number-french {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .number-english {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .grammar-card {
+            background: #f9f9f9;
+            border: 2px solid #002395;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .grammar-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #002395;
+            margin-bottom: 20px;
+        }
+
+        .grammar-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .grammar-table th {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .grammar-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .grammar-table tr:hover {
+            background: #f0f0f0;
+        }
+
+        .grammar-example {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #E1000F;
+        }
+
+        .grammar-example-fr {
+            font-weight: 600;
+            color: #002395;
+            margin-bottom: 5px;
+        }
+
+        .grammar-example-en {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .progress-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .progress-card {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            border: 2px solid #002395;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .progress-label {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .progress-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #002395;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #002395 0%, #E1000F 100%);
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 35, 149, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #002395;
+            border: 2px solid #002395;
+        }
+
+        .btn-secondary:hover {
+            background: #002395;
+            color: white;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .score-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #002395;
+            margin: 10px 0;
+        }
+
+        .score-message {
+            font-size: 1.2em;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 10px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-title h1 {
+                font-size: 1.5em;
+            }
+
+            .header-stats {
+                gap: 15px;
+                justify-content: center;
+            }
+
+            .stat-box {
+                min-width: 100px;
+                padding: 8px 15px;
+            }
+
+            nav button {
+                min-width: 100px;
+                padding: 12px 15px;
+                font-size: 0.9em;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .lesson-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .vocabulary-list {
+                grid-template-columns: 1fr;
+            }
+
+            .flashcard {
+                padding: 30px 20px;
+                min-height: 250px;
+            }
+
+            .flashcard-text {
+                font-size: 1.8em;
+            }
+
+            .numbers-section {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .number-card {
+                padding: 15px;
+            }
+
+            .number-value {
+                font-size: 1.5em;
+            }
+
+            .phrase-list {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .scroll-to-top.show {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>🇫🇷 Learn French</h1>
+                    <p>Master French through interactive lessons</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Topics Completed</div>
+                        <div class="stat-value" id="completedTopics">12</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total XP</div>
+                        <div class="stat-value" id="totalXP">450</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="streak-counter">
+                            <span>🔥</span>
+                            <div>
+                                <div class="stat-label">Daily Streak</div>
+                                <div class="stat-value" id="streakCount">7</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <nav id="navBar">
+            <button class="nav-btn active" data-section="home">Home</button>
+            <button class="nav-btn" data-section="flashcards">Flashcards</button>
+            <button class="nav-btn" data-section="quiz">Quiz</button>
+            <button class="nav-btn" data-section="phrases">Phrases</button>
+            <button class="nav-btn" data-section="numbers">Numbers</button>
+            <button class="nav-btn" data-section="grammar">Grammar</button>
+            <button class="nav-btn" data-section="progress">Progress</button>
+        </nav>
+
+        <div class="content">
+            <!-- HOME SECTION -->
+            <div id="home" class="section active">
+                <h2 style="color: #002395; margin-bottom: 30px;">📚 Choose a Lesson</h2>
+                <div class="lesson-grid">
+                    <div class="lesson-card" onclick="showLesson('greetings')">
+                        <div class="lesson-emoji">👋</div>
+                        <div class="lesson-title">Greetings</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('family')">
+                        <div class="lesson-emoji">👨‍👩‍👧‍👦</div>
+                        <div class="lesson-title">Family</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('food')">
+                        <div class="lesson-emoji">🍽️</div>
+                        <div class="lesson-title">Food</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('travel')">
+                        <div class="lesson-emoji">✈️</div>
+                        <div class="lesson-title">Travel</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('colors')">
+                        <div class="lesson-emoji">🌈</div>
+                        <div class="lesson-title">Colors</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('days_time')">
+                        <div class="lesson-emoji">⏰</div>
+                        <div class="lesson-title">Days & Time</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('body_health')">
+                        <div class="lesson-emoji">🏥</div>
+                        <div class="lesson-title">Body & Health</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('shopping')">
+                        <div class="lesson-emoji">🛍️</div>
+                        <div class="lesson-title">Shopping</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('emotions')">
+                        <div class="lesson-emoji">😊</div>
+                        <div class="lesson-title">Emotions</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('weather')">
+                        <div class="lesson-emoji">🌤️</div>
+                        <div class="lesson-title">Weather</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('professions')">
+                        <div class="lesson-emoji">💼</div>
+                        <div class="lesson-title">Professions</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                    <div class="lesson-card" onclick="showLesson('home_furniture')">
+                        <div class="lesson-emoji">🏠</div>
+                        <div class="lesson-title">Home & Furniture</div>
+                        <div class="lesson-count">12 words</div>
+                    </div>
+                </div>
+
+                <div id="lessonContent" style="margin-top: 30px;"></div>
+            </div>
+
+            <!-- FLASHCARDS SECTION -->
+            <div id="flashcards" class="section">
+                <h2 style="color: #002395; margin-bottom: 20px;">🎴 Flashcards</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">Click the card to reveal the answer</p>
+
+                <div class="button-group">
+                    <select id="flashcardTopic" style="padding: 10px 20px; border: 2px solid #002395; border-radius: 8px; font-size: 1em;">
+                        <option value="greetings">Greetings</option>
+                        <option value="family">Family</option>
+                        <option value="food">Food</option>
+                        <option value="travel">Travel</option>
+                        <option value="colors">Colors</option>
+                        <option value="days_time">Days & Time</option>
+                        <option value="body_health">Body & Health</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="emotions">Emotions</option>
+                        <option value="weather">Weather</option>
+                        <option value="professions">Professions</option>
+                        <option value="home_furniture">Home & Furniture</option>
+                    </select>
+                </div>
+
+                <div id="flashcardContainer"></div>
+            </div>
+
+            <!-- QUIZ SECTION -->
+            <div id="quiz" class="section">
+                <h2 style="color: #002395; margin-bottom: 20px;">📝 Quiz</h2>
+
+                <div class="button-group">
+                    <select id="quizTopic" style="padding: 10px 20px; border: 2px solid #002395; border-radius: 8px; font-size: 1em;">
+                        <option value="greetings">Greetings</option>
+                        <option value="family">Family</option>
+                        <option value="food">Food</option>
+                        <option value="travel">Travel</option>
+                        <option value="colors">Colors</option>
+                        <option value="days_time">Days & Time</option>
+                        <option value="body_health">Body & Health</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="emotions">Emotions</option>
+                        <option value="weather">Weather</option>
+                        <option value="professions">Professions</option>
+                        <option value="home_furniture">Home & Furniture</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="startQuiz()">Start Quiz</button>
+                </div>
+
+                <div id="quizContainer"></div>
+            </div>
+
+            <!-- PHRASES SECTION -->
+            <div id="phrases" class="section">
+                <h2 style="color: #002395; margin-bottom: 30px;">💬 Useful Phrases</h2>
+
+                <div class="phrase-category">
+                    <h3>🏨 Travel & Hotel</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-item">
+                            <div class="phrase-french">Bonjour, avez-vous des chambres disponibles?</div>
+                            <div class="phrase-english">Hello, do you have any rooms available?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Je voudrais une chambre pour deux personnes.</div>
+                            <div class="phrase-english">I would like a room for two people.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Quel est le prix par nuit?</div>
+                            <div class="phrase-english">What is the price per night?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Acceptez-vous les animaux?</div>
+                            <div class="phrase-english">Do you accept pets?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">À quelle heure est le petit-déjeuner?</div>
+                            <div class="phrase-english">What time is breakfast?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Pouvez-vous m'aider avec les bagages?</div>
+                            <div class="phrase-english">Can you help me with the luggage?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phrase-category">
+                    <h3>🍽️ Restaurant & Dining</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-item">
+                            <div class="phrase-french">Une table pour deux, s'il vous plaît.</div>
+                            <div class="phrase-english">A table for two, please.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Je voudrais voir le menu.</div>
+                            <div class="phrase-english">I would like to see the menu.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Qu'est-ce que vous recommandez?</div>
+                            <div class="phrase-english">What do you recommend?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">L'addition, s'il vous plaît.</div>
+                            <div class="phrase-english">The bill, please.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">C'était délicieux!</div>
+                            <div class="phrase-english">It was delicious!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Pouvez-vous me suggérer un vin?</div>
+                            <div class="phrase-english">Can you suggest a wine?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phrase-category">
+                    <h3>🛒 Shopping & Money</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-item">
+                            <div class="phrase-french">C'est trop cher.</div>
+                            <div class="phrase-english">That's too expensive.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Avez-vous une taille plus grande?</div>
+                            <div class="phrase-english">Do you have a larger size?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Je voudrais essayer ceci.</div>
+                            <div class="phrase-english">I would like to try this on.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Acceptez-vous les cartes?</div>
+                            <div class="phrase-english">Do you accept cards?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Où est le rayon des vêtements?</div>
+                            <div class="phrase-english">Where is the clothing section?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">C'est en solde?</div>
+                            <div class="phrase-english">Is this on sale?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phrase-category">
+                    <h3>☀️ Weather & Small Talk</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-item">
+                            <div class="phrase-french">Quel temps fait-il?</div>
+                            <div class="phrase-english">What is the weather like?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Il fait beau aujourd'hui.</div>
+                            <div class="phrase-english">It's nice weather today.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Il va pleuvoir demain.</div>
+                            <div class="phrase-english">It will rain tomorrow.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">J'ai chaud.</div>
+                            <div class="phrase-english">I'm hot.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">J'ai froid.</div>
+                            <div class="phrase-english">I'm cold.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Quelle belle journée!</div>
+                            <div class="phrase-english">What a beautiful day!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Le temps est affreux.</div>
+                            <div class="phrase-english">The weather is awful.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phrase-category">
+                    <h3>👋 Common Greetings & Politeness</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-item">
+                            <div class="phrase-french">Bonjour!</div>
+                            <div class="phrase-english">Hello! (daytime)</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Bonsoir!</div>
+                            <div class="phrase-english">Good evening!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Bonne nuit!</div>
+                            <div class="phrase-english">Good night!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Comment allez-vous?</div>
+                            <div class="phrase-english">How are you? (formal)</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Ça va bien, merci!</div>
+                            <div class="phrase-english">I'm fine, thank you!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Au revoir!</div>
+                            <div class="phrase-english">Goodbye!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">À bientôt!</div>
+                            <div class="phrase-english">See you soon!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">S'il vous plaît.</div>
+                            <div class="phrase-english">Please. (formal)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phrase-category">
+                    <h3>🆘 Emergency & Help</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-item">
+                            <div class="phrase-french">À l'aide!</div>
+                            <div class="phrase-english">Help!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Appelez une ambulance!</div>
+                            <div class="phrase-english">Call an ambulance!</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Je ne comprends pas.</div>
+                            <div class="phrase-english">I don't understand.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Parlez plus lentement, s'il vous plaît.</div>
+                            <div class="phrase-english">Speak more slowly, please.</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Parlez-vous anglais?</div>
+                            <div class="phrase-english">Do you speak English?</div>
+                        </div>
+                        <div class="phrase-item">
+                            <div class="phrase-french">Où sont les toilettes?</div>
+                            <div class="phrase-english">Where is the restroom?</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NUMBERS SECTION -->
+            <div id="numbers" class="section">
+                <h2 style="color: #002395; margin-bottom: 30px;">🔢 Numbers</h2>
+                <div class="numbers-section">
+                    <div class="number-card">
+                        <div class="number-value">0</div>
+                        <div class="number-french">Zéro</div>
+                        <div class="number-english">Zero</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">1</div>
+                        <div class="number-french">Un</div>
+                        <div class="number-english">One</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">2</div>
+                        <div class="number-french">Deux</div>
+                        <div class="number-english">Two</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">3</div>
+                        <div class="number-french">Trois</div>
+                        <div class="number-english">Three</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">4</div>
+                        <div class="number-french">Quatre</div>
+                        <div class="number-english">Four</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">5</div>
+                        <div class="number-french">Cinq</div>
+                        <div class="number-english">Five</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">6</div>
+                        <div class="number-french">Six</div>
+                        <div class="number-english">Six</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">7</div>
+                        <div class="number-french">Sept</div>
+                        <div class="number-english">Seven</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">8</div>
+                        <div class="number-french">Huit</div>
+                        <div class="number-english">Eight</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">9</div>
+                        <div class="number-french">Neuf</div>
+                        <div class="number-english">Nine</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">10</div>
+                        <div class="number-french">Dix</div>
+                        <div class="number-english">Ten</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">11</div>
+                        <div class="number-french">Onze</div>
+                        <div class="number-english">Eleven</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">12</div>
+                        <div class="number-french">Douze</div>
+                        <div class="number-english">Twelve</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">13</div>
+                        <div class="number-french">Treize</div>
+                        <div class="number-english">Thirteen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">14</div>
+                        <div class="number-french">Quatorze</div>
+                        <div class="number-english">Fourteen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">15</div>
+                        <div class="number-french">Quinze</div>
+                        <div class="number-english">Fifteen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">16</div>
+                        <div class="number-french">Seize</div>
+                        <div class="number-english">Sixteen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">17</div>
+                        <div class="number-french">Dix-sept</div>
+                        <div class="number-english">Seventeen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">18</div>
+                        <div class="number-french">Dix-huit</div>
+                        <div class="number-english">Eighteen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">19</div>
+                        <div class="number-french">Dix-neuf</div>
+                        <div class="number-english">Nineteen</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">20</div>
+                        <div class="number-french">Vingt</div>
+                        <div class="number-english">Twenty</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">30</div>
+                        <div class="number-french">Trente</div>
+                        <div class="number-english">Thirty</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">40</div>
+                        <div class="number-french">Quarante</div>
+                        <div class="number-english">Forty</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">50</div>
+                        <div class="number-french">Cinquante</div>
+                        <div class="number-english">Fifty</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">60</div>
+                        <div class="number-french">Soixante</div>
+                        <div class="number-english">Sixty</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">70</div>
+                        <div class="number-french">Soixante-dix</div>
+                        <div class="number-english">Seventy</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">80</div>
+                        <div class="number-french">Quatre-vingts</div>
+                        <div class="number-english">Eighty</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">90</div>
+                        <div class="number-french">Quatre-vingt-dix</div>
+                        <div class="number-english">Ninety</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">100</div>
+                        <div class="number-french">Cent</div>
+                        <div class="number-english">Hundred</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-value">1000</div>
+                        <div class="number-french">Mille</div>
+                        <div class="number-english">Thousand</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAMMAR SECTION -->
+            <div id="grammar" class="section">
+                <h2 style="color: #002395; margin-bottom: 30px;">📖 Grammar</h2>
+
+                <div class="grammar-card">
+                    <div class="grammar-title">Present Tense of "To Be" (Être)</div>
+                    <table class="grammar-table">
+                        <tr>
+                            <th>Pronoun</th>
+                            <th>Conjugation</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td>Je</td>
+                            <td>suis</td>
+                            <td>Je suis français.</td>
+                        </tr>
+                        <tr>
+                            <td>Tu</td>
+                            <td>es</td>
+                            <td>Tu es intelligent.</td>
+                        </tr>
+                        <tr>
+                            <td>Il/Elle</td>
+                            <td>est</td>
+                            <td>Elle est belle.</td>
+                        </tr>
+                        <tr>
+                            <td>Nous</td>
+                            <td>sommes</td>
+                            <td>Nous sommes amis.</td>
+                        </tr>
+                        <tr>
+                            <td>Vous</td>
+                            <td>êtes</td>
+                            <td>Vous êtes occupés.</td>
+                        </tr>
+                        <tr>
+                            <td>Ils/Elles</td>
+                            <td>sont</td>
+                            <td>Ils sont heureux.</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="grammar-card">
+                    <div class="grammar-title">Present Tense of "To Have" (Avoir)</div>
+                    <table class="grammar-table">
+                        <tr>
+                            <th>Pronoun</th>
+                            <th>Conjugation</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td>Je</td>
+                            <td>ai</td>
+                            <td>J'ai un chat.</td>
+                        </tr>
+                        <tr>
+                            <td>Tu</td>
+                            <td>as</td>
+                            <td>Tu as une voiture.</td>
+                        </tr>
+                        <tr>
+                            <td>Il/Elle</td>
+                            <td>a</td>
+                            <td>Elle a un livre.</td>
+                        </tr>
+                        <tr>
+                            <td>Nous</td>
+                            <td>avons</td>
+                            <td>Nous avons une maison.</td>
+                        </tr>
+                        <tr>
+                            <td>Vous</td>
+                            <td>avez</td>
+                            <td>Vous avez des enfants.</td>
+                        </tr>
+                        <tr>
+                            <td>Ils/Elles</td>
+                            <td>ont</td>
+                            <td>Ils ont un chien.</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="grammar-card">
+                    <div class="grammar-title">Regular -ER Verb Conjugation (Parler - To Speak)</div>
+                    <table class="grammar-table">
+                        <tr>
+                            <th>Pronoun</th>
+                            <th>Conjugation</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td>Je</td>
+                            <td>parle</td>
+                            <td>Je parle français.</td>
+                        </tr>
+                        <tr>
+                            <td>Tu</td>
+                            <td>parles</td>
+                            <td>Tu parles anglais.</td>
+                        </tr>
+                        <tr>
+                            <td>Il/Elle</td>
+                            <td>parle</td>
+                            <td>Elle parle lentement.</td>
+                        </tr>
+                        <tr>
+                            <td>Nous</td>
+                            <td>parlons</td>
+                            <td>Nous parlons ensemble.</td>
+                        </tr>
+                        <tr>
+                            <td>Vous</td>
+                            <td>parlez</td>
+                            <td>Vous parlez bien.</td>
+                        </tr>
+                        <tr>
+                            <td>Ils/Elles</td>
+                            <td>parlent</td>
+                            <td>Ils parlent espagnol.</td>
+                        </tr>
+                    </table>
+                    <div class="grammar-example">
+                        <div class="grammar-example-fr">Pattern: Parler → Par + verb endings (e, es, e, ons, ez, ent)</div>
+                        <div class="grammar-example-en">Regular -ER verbs follow this same pattern: aimer (to love), danser (to dance), marcher (to walk), manger (to eat)</div>
+                    </div>
+                </div>
+
+                <div class="grammar-card">
+                    <div class="grammar-title">Common Prepositions</div>
+                    <table class="grammar-table">
+                        <tr>
+                            <th>Preposition</th>
+                            <th>Meaning</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td>à</td>
+                            <td>to, at</td>
+                            <td>Je vais à Paris.</td>
+                        </tr>
+                        <tr>
+                            <td>de</td>
+                            <td>of, from</td>
+                            <td>Le livre de Pierre.</td>
+                        </tr>
+                        <tr>
+                            <td>dans</td>
+                            <td>in, inside</td>
+                            <td>Le chat est dans la maison.</td>
+                        </tr>
+                        <tr>
+                            <td>sur</td>
+                            <td>on</td>
+                            <td>La table est sur le tapis.</td>
+                        </tr>
+                        <tr>
+                            <td>sous</td>
+                            <td>under</td>
+                            <td>Le ballon est sous le lit.</td>
+                        </tr>
+                        <tr>
+                            <td>avec</td>
+                            <td>with</td>
+                            <td>Je vais avec mon ami.</td>
+                        </tr>
+                        <tr>
+                            <td>sans</td>
+                            <td>without</td>
+                            <td>Un café sans sucre.</td>
+                        </tr>
+                        <tr>
+                            <td>pour</td>
+                            <td>for</td>
+                            <td>C'est un cadeau pour toi.</td>
+                        </tr>
+                        <tr>
+                            <td>entre</td>
+                            <td>between</td>
+                            <td>Entre la maison et l'école.</td>
+                        </tr>
+                        <tr>
+                            <td>devant</td>
+                            <td>in front of</td>
+                            <td>La voiture est devant la maison.</td>
+                        </tr>
+                        <tr>
+                            <td>derrière</td>
+                            <td>behind</td>
+                            <td>Le jardin est derrière la maison.</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="grammar-card">
+                    <div class="grammar-title">Gender & Articles</div>
+                    <div class="grammar-example">
+                        <div class="grammar-example-fr">Masculine: le, un (the, a)</div>
+                        <div class="grammar-example-en">Example: le chat (the cat), un livre (a book)</div>
+                    </div>
+                    <div class="grammar-example">
+                        <div class="grammar-example-fr">Feminine: la, une (the, a)</div>
+                        <div class="grammar-example-en">Example: la maison (the house), une chaise (a chair)</div>
+                    </div>
+                    <div class="grammar-example">
+                        <div class="grammar-example-fr">Plural: les, des (the, some)</div>
+                        <div class="grammar-example-en">Example: les livres (the books), des maisons (some houses)</div>
+                    </div>
+                </div>
+
+                <div class="grammar-card">
+                    <div class="grammar-title">Verb "Go" (Aller)</div>
+                    <table class="grammar-table">
+                        <tr>
+                            <th>Pronoun</th>
+                            <th>Conjugation</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td>Je</td>
+                            <td>vais</td>
+                            <td>Je vais à l'école.</td>
+                        </tr>
+                        <tr>
+                            <td>Tu</td>
+                            <td>vas</td>
+                            <td>Tu vas au cinéma.</td>
+                        </tr>
+                        <tr>
+                            <td>Il/Elle</td>
+                            <td>va</td>
+                            <td>Elle va au marché.</td>
+                        </tr>
+                        <tr>
+                            <td>Nous</td>
+                            <td>allons</td>
+                            <td>Nous allons en France.</td>
+                        </tr>
+                        <tr>
+                            <td>Vous</td>
+                            <td>allez</td>
+                            <td>Vous allez bien?</td>
+                        </tr>
+                        <tr>
+                            <td>Ils/Elles</td>
+                            <td>vont</td>
+                            <td>Ils vont à la plage.</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PROGRESS SECTION -->
+            <div id="progress" class="section">
+                <h2 style="color: #002395; margin-bottom: 30px;">📊 Your Progress</h2>
+
+                <div class="progress-section">
+                    <div class="progress-card">
+                        <div class="progress-label">Topics Completed</div>
+                        <div class="progress-value">12</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 100%;"></div>
+                        </div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">All topics unlocked!</p>
+                    </div>
+                    <div class="progress-card">
+                        <div class="progress-label">Total XP Earned</div>
+                        <div class="progress-value">450</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 45%;"></div>
+                        </div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">45% to next level</p>
+                    </div>
+                    <div class="progress-card">
+                        <div class="progress-label">Vocabulary Learned</div>
+                        <div class="progress-value">156</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 65%;"></div>
+                        </div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">65% of total vocab</p>
+                    </div>
+                    <div class="progress-card">
+                        <div class="progress-label">Quizzes Passed</div>
+                        <div class="progress-value">24</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 80%;"></div>
+                        </div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">80% success rate</p>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border: 2px solid #002395; border-radius: 12px; padding: 30px; text-align: center; margin-top: 30px;">
+                    <h3 style="color: #002395; margin-bottom: 15px;">🎯 Next Goal</h3>
+                    <p style="color: #666; font-size: 1.1em; margin-bottom: 20px;">Complete 5 more quizzes to reach 29 and unlock the Achievement Badge!</p>
+                    <div class="progress-bar" style="max-width: 400px; margin: 0 auto;">
+                        <div class="progress-bar-fill" style="width: 80%;"></div>
+                    </div>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 10px;">4 of 5 quizzes completed</p>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
+                    <h3 style="color: #856404; margin-bottom: 10px;">💡 Tips for Better Learning</h3>
+                    <ul style="color: #856404; line-height: 1.8;">
+                        <li>Spend at least 10 minutes daily on flashcards for better retention</li>
+                        <li>Take multiple quizzes on the same topic to master it</li>
+                        <li>Practice pronunciation by repeating phrases out loud</li>
+                        <li>Use the phrases in real conversations when possible</li>
+                        <li>Keep a consistent daily streak for better long-term learning</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="scroll-to-top" id="scrollBtn" onclick="scrollToTop()">↑</button>
+
+    <script>
+        // Vocabulary Data - All Topics
+        const vocabularyData = {
+            greetings: [
+                { fr: "Bonjour", en: "Hello (daytime)", phonetic: "bon-ZHUR", example: "Bonjour, comment allez-vous?" },
+                { fr: "Bonsoir", en: "Good evening", phonetic: "bon-SWAH", example: "Bonsoir, comment ça va?" },
+                { fr: "Bonne nuit", en: "Good night", phonetic: "bon nwee", example: "Bonne nuit, à demain!" },
+                { fr: "Au revoir", en: "Goodbye", phonetic: "oh ruh-VWAH", example: "Au revoir, à bientôt!" },
+                { fr: "À bientôt", en: "See you soon", phonetic: "ah bee-YON-toh", example: "À bientôt, mon ami!" },
+                { fr: "Salut", en: "Hi/Bye (informal)", phonetic: "sah-LOO", example: "Salut, ça va?" },
+                { fr: "Enchanté(e)", en: "Nice to meet you", phonetic: "on-shan-TAY", example: "Enchanté, je suis Pierre." },
+                { fr: "Ça va?", en: "How are you?", phonetic: "sah vah", example: "Ça va bien, merci!" },
+                { fr: "Comment ça va?", en: "How are you? (formal)", phonetic: "ko-mon sah vah", example: "Comment ça va aujourd'hui?" },
+                { fr: "Très bien", en: "Very well", phonetic: "treh bee-YAN", example: "Je vais très bien, merci!" },
+                { fr: "Pas mal", en: "Not bad", phonetic: "pah mahl", example: "Comment ça va? Pas mal!" },
+                { fr: "Et toi?", en: "And you? (informal)", phonetic: "ay twah", example: "Je vais bien, et toi?" }
+            ],
+            family: [
+                { fr: "Le père", en: "Father", phonetic: "luh PAIR", example: "Mon père est médecin." },
+                { fr: "La mère", en: "Mother", phonetic: "lah MEHR", example: "Ma mère aime cuisiner." },
+                { fr: "Le fils", en: "Son", phonetic: "luh FEE", example: "Son fils a cinq ans." },
+                { fr: "La fille", en: "Daughter", phonetic: "lah FEE", example: "Sa fille est très intelligente." },
+                { fr: "Le frère", en: "Brother", phonetic: "luh FREHR", example: "Mon frère joue au football." },
+                { fr: "La sœur", en: "Sister", phonetic: "lah SER", example: "Ma sœur est plus âgée que moi." },
+                { fr: "Le grand-père", en: "Grandfather", phonetic: "luh GRAHN-pehr", example: "Mon grand-père a 80 ans." },
+                { fr: "La grand-mère", en: "Grandmother", phonetic: "lah GRAHN-mehr", example: "Ma grand-mère habite en Provence." },
+                { fr: "L'oncle", en: "Uncle", phonetic: "lon-KL", example: "Mon oncle vit à Paris." },
+                { fr: "La tante", en: "Aunt", phonetic: "lah TAHNT", example: "Ma tante est professeure." },
+                { fr: "Le cousin", en: "Cousin (male)", phonetic: "luh koo-ZAN", example: "Mon cousin est musicien." },
+                { fr: "La cousine", en: "Cousin (female)", phonetic: "lah koo-ZEEN", example: "Ma cousine habite près de moi." }
+            ],
+            food: [
+                { fr: "Le pain", en: "Bread", phonetic: "luh PAN", example: "Je mange du pain au petit-déjeuner." },
+                { fr: "Le fromage", en: "Cheese", phonetic: "luh fro-MAHZH", example: "Je voudrais du fromage français." },
+                { fr: "La viande", en: "Meat", phonetic: "lah vee-AHND", example: "Cette viande est délicieuse." },
+                { fr: "Le poulet", en: "Chicken", phonetic: "luh poo-LEH", example: "Je préfère le poulet rôti." },
+                { fr: "Le poisson", en: "Fish", phonetic: "luh pwah-SON", example: "Le poisson est bon pour la santé." },
+                { fr: "La pomme", en: "Apple", phonetic: "lah POM", example: "Elle mange une pomme rouge." },
+                { fr: "La poire", en: "Pear", phonetic: "lah PWAHR", example: "Cette poire est juteuse." },
+                { fr: "La salade", en: "Salad", phonetic: "lah sah-LAHD", example: "Je mange une salade verte." },
+                { fr: "Le riz", en: "Rice", phonetic: "luh REE", example: "Je fais du riz pour le dîner." },
+                { fr: "Les pâtes", en: "Pasta", phonetic: "lay PAHT", example: "Les pâtes à la crème sont excellentes." },
+                { fr: "Le café", en: "Coffee", phonetic: "luh kah-FAY", example: "Je prends un café chaud le matin." },
+                { fr: "Le vin", en: "Wine", phonetic: "luh VAN", example: "Ce vin rouge est délicieux." }
+            ],
+            travel: [
+                { fr: "L'avion", en: "Airplane", phonetic: "lah-vee-ON", example: "Je prends l'avion demain." },
+                { fr: "La gare", en: "Train station", phonetic: "lah GAHR", example: "La gare est près de l'hôtel." },
+                { fr: "Le train", en: "Train", phonetic: "luh TRAN", example: "Je vais à Paris en train." },
+                { fr: "La voiture", en: "Car", phonetic: "lah vwah-TUR", example: "Nous prenons la voiture pour aller au marché." },
+                { fr: "L'hôtel", en: "Hotel", phonetic: "lo-TEL", example: "Où est l'hôtel le plus proche?" },
+                { fr: "La chambre", en: "Room", phonetic: "lah SHAHM-br", example: "J'ai réservé une chambre pour deux." },
+                { fr: "Le passeport", en: "Passport", phonetic: "luh pah-suh-POR", example: "Où est mon passeport?" },
+                { fr: "La valise", en: "Suitcase", phonetic: "lah vah-LEEZ", example: "Ma valise est très lourde." },
+                { fr: "La carte", en: "Map", phonetic: "lah KART", example: "Avez-vous une carte de la région?" },
+                { fr: "Le billet", en: "Ticket", phonetic: "luh bee-YEH", example: "Je dois acheter un billet de train." },
+                { fr: "La plage", en: "Beach", phonetic: "lah PLAZH", example: "Nous allons à la plage ce weekend." },
+                { fr: "La montagne", en: "Mountain", phonetic: "lah mon-TAN-y", example: "Les Alpes sont magnifiques." }
+            ],
+            colors: [
+                { fr: "Rouge", en: "Red", phonetic: "ROOZH", example: "J'aime la voiture rouge." },
+                { fr: "Bleu", en: "Blue", phonetic: "BLUH", example: "Le ciel est bleu aujourd'hui." },
+                { fr: "Jaune", en: "Yellow", phonetic: "ZHOHN", example: "Elle porte une robe jaune." },
+                { fr: "Vert", en: "Green", phonetic: "VER", example: "L'herbe est verte au printemps." },
+                { fr: "Orange", en: "Orange", phonetic: "or-AHNZH", example: "Cette orange est juteuse." },
+                { fr: "Violet", en: "Purple", phonetic: "vee-o-LEH", example: "Elle a les yeux violets." },
+                { fr: "Rose", en: "Pink", phonetic: "ROHZ", example: "La robe est rose et jolie." },
+                { fr: "Noir", en: "Black", phonetic: "NWAHR", example: "J'ai un chat noir." },
+                { fr: "Blanc", en: "White", phonetic: "BLAHN", example: "La neige est blanche." },
+                { fr: "Gris", en: "Gray", phonetic: "GREE", example: "Le ciel est gris aujourd'hui." },
+                { fr: "Marron", en: "Brown", phonetic: "mah-RON", example: "Ses cheveux sont marron." },
+                { fr: "Beige", en: "Beige", phonetic: "BERZH", example: "Elle porte une veste beige." }
+            ],
+            days_time: [
+                { fr: "Lundi", en: "Monday", phonetic: "lun-DEE", example: "Lundi, je vais au travail." },
+                { fr: "Mardi", en: "Tuesday", phonetic: "mar-DEE", example: "Mardi est mon jour préféré." },
+                { fr: "Mercredi", en: "Wednesday", phonetic: "mer-kruh-DEE", example: "Mercredi, il y a un film." },
+                { fr: "Jeudi", en: "Thursday", phonetic: "zhuh-DEE", example: "Jeudi soir, nous dînons ensemble." },
+                { fr: "Vendredi", en: "Friday", phonetic: "vahn-druh-DEE", example: "Vendredi, c'est mon jour préféré!" },
+                { fr: "Samedi", en: "Saturday", phonetic: "sam-DEE", example: "Samedi, nous allons au marché." },
+                { fr: "Dimanche", en: "Sunday", phonetic: "dee-MAHNSH", example: "Dimanche, je me repose." },
+                { fr: "L'heure", en: "Hour/Time", phonetic: "lur", example: "Quelle heure est-il?" },
+                { fr: "La minute", en: "Minute", phonetic: "lah mee-NUT", example: "Attendez une minute, s'il vous plaît." },
+                { fr: "Le matin", en: "Morning", phonetic: "luh mah-TAN", example: "Je me lève le matin à 7 heures." },
+                { fr: "L'après-midi", en: "Afternoon", phonetic: "lah-preh-mee-DEE", example: "Je travaille l'après-midi." },
+                { fr: "Le soir", en: "Evening", phonetic: "luh SWAHR", example: "Nous dînons le soir à 7 heures." }
+            ],
+            body_health: [
+                { fr: "La tête", en: "Head", phonetic: "lah TET", example: "J'ai mal à la tête." },
+                { fr: "Le bras", en: "Arm", phonetic: "luh BRAH", example: "Je me suis cassé le bras." },
+                { fr: "La jambe", en: "Leg", phonetic: "lah ZHAHM", example: "Elle a une belle jambe musclée." },
+                { fr: "Le cœur", en: "Heart", phonetic: "luh KUR", example: "Le cœur pompe le sang." },
+                { fr: "Le dos", en: "Back", phonetic: "luh DOH", example: "J'ai mal au dos aujourd'hui." },
+                { fr: "L'estomac", en: "Stomach", phonetic: "les-to-MAH", example: "Son estomac est dérangé." },
+                { fr: "La main", en: "Hand", phonetic: "lah MAN", example: "Je me lave les mains." },
+                { fr: "Le pied", en: "Foot", phonetic: "luh pee-AY", example: "Mes pieds sont fatigués." },
+                { fr: "Le médecin", en: "Doctor", phonetic: "luh may-duh-SAN", example: "Je vais chez le médecin." },
+                { fr: "La pharmacie", en: "Pharmacy", phonetic: "lah far-mah-SEE", example: "La pharmacie est fermée le dimanche." },
+                { fr: "Malade", en: "Sick", phonetic: "mah-LAD", example: "Je suis malade ce matin." },
+                { fr: "La douleur", en: "Pain", phonetic: "lah doo-LUR", example: "La douleur diminue avec le médicament." }
+            ],
+            shopping: [
+                { fr: "Le magasin", en: "Store", phonetic: "luh mah-gah-ZAN", example: "Je vais au magasin le samedi." },
+                { fr: "Acheter", en: "To buy", phonetic: "ahsh-tay", example: "Je veux acheter une nouvelle robe." },
+                { fr: "Combien", en: "How much", phonetic: "kom-bee-YAN", example: "Combien coûte ce livre?" },
+                { fr: "Cher", en: "Expensive", phonetic: "SHER", example: "Ce restaurant est très cher." },
+                { fr: "Bon marché", en: "Cheap", phonetic: "bon mar-shay", example: "Ces vêtements sont bon marché." },
+                { fr: "La taille", en: "Size", phonetic: "lah TY", example: "Quelle est votre taille?" },
+                { fr: "Essayer", en: "To try on", phonetic: "eh-say-yay", example: "Puis-je essayer cette chemise?" },
+                { fr: "Payer", en: "To pay", phonetic: "peh-yay", example: "Je dois payer à la caisse." },
+                { fr: "La carte bancaire", en: "Credit card", phonetic: "lah kart bahn-kehr", example: "Acceptez-vous les cartes bancaires?" },
+                { fr: "La caisse", en: "Cashier/Register", phonetic: "lah KES", example: "Allez à la caisse pour payer." },
+                { fr: "Le prix", en: "Price", phonetic: "luh PREE", example: "Quel est le prix de ce sac?" },
+                { fr: "Une réduction", en: "A discount", phonetic: "oon ray-duk-see-ON", example: "Y a-t-il une réduction aujourd'hui?" }
+            ],
+            emotions: [
+                { fr: "Heureux/Heureuse", en: "Happy", phonetic: "ur-uh/ur-uz", example: "Je suis très heureux aujourd'hui." },
+                { fr: "Triste", en: "Sad", phonetic: "TREEST", example: "Elle est triste après le film." },
+                { fr: "En colère", en: "Angry", phonetic: "ahn ko-LAIR", example: "Il est en colère contre moi." },
+                { fr: "Fatigué(e)", en: "Tired", phonetic: "fah-tee-gay", example: "Je suis très fatigué après le travail." },
+                { fr: "Surpris(e)", en: "Surprised", phonetic: "sur-pree-ZAY", example: "Nous sommes surpris par la nouvelle." },
+                { fr: "Inquiet/Inquiète", en: "Worried", phonetic: "an-kee-eh", example: "Elle est inquiète pour son fils." },
+                { fr: "Fier/Fière", en: "Proud", phonetic: "fee-ay", example: "Je suis fier de mon travail." },
+                { fr: "Amoureux/Amoureuse", en: "In love", phonetic: "ah-moo-ruh/ah-moo-ruz", example: "Il est amoureux de sa collègue." },
+                { fr: "Content(e)", en: "Happy/Pleased", phonetic: "kon-tahn", example: "Je suis content de te voir." },
+                { fr: "Nerveux/Nerveuse", en: "Nervous", phonetic: "ner-vuh", example: "Je suis nerveux avant l'examen." },
+                { fr: "Jaloux/Jalouse", en: "Jealous", phonetic: "zhah-loo", example: "Il est jaloux de son ami." },
+                { fr: "Confus(e)", en: "Confused", phonetic: "kon-few-zay", example: "Je suis confus par les instructions." }
+            ],
+            weather: [
+                { fr: "Il fait chaud", en: "It's hot", phonetic: "eel feh SHOH", example: "Il fait très chaud aujourd'hui." },
+                { fr: "Il fait froid", en: "It's cold", phonetic: "eel feh FRWAH", example: "Il fait froid en hiver." },
+                { fr: "Il pleut", en: "It's raining", phonetic: "eel PLUH", example: "Il pleut beaucoup ce matin." },
+                { fr: "Il neige", en: "It's snowing", phonetic: "eel NEZH", example: "Il neige dans les montagnes." },
+                { fr: "Le soleil", en: "The sun", phonetic: "luh so-LAY", example: "Le soleil brille aujourd'hui." },
+                { fr: "Le vent", en: "The wind", phonetic: "luh VAHN", example: "Le vent est très fort." },
+                { fr: "Un orage", en: "A storm", phonetic: "un o-RAZH", example: "Il y a un orage ce soir." },
+                { fr: "Les nuages", en: "The clouds", phonetic: "lay noo-AHZ", example: "Il y a beaucoup de nuages." },
+                { fr: "La pluie", en: "The rain", phonetic: "lah PLUH-ee", example: "La pluie est bonne pour les plantes." },
+                { fr: "La neige", en: "The snow", phonetic: "lah NEH-zhuh", example: "La neige recouvre tout." },
+                { fr: "Le brouillard", en: "The fog", phonetic: "luh broo-yar", example: "Le brouillard rend la route dangereuse." },
+                { fr: "La température", en: "The temperature", phonetic: "lah tom-pay-rah-TUR", example: "La température baisse ce soir." }
+            ],
+            professions: [
+                { fr: "Le/La médecin", en: "Doctor", phonetic: "luh/lah may-duh-SAN", example: "Elle est médecin à l'hôpital." },
+                { fr: "L'avocat(e)", en: "Lawyer", phonetic: "lah-vo-kah", example: "Il est avocat spécialisé en droit civil." },
+                { fr: "L'ingénieur(e)", en: "Engineer", phonetic: "lan-zhay-nyer", example: "Elle est ingénieur en informatique." },
+                { fr: "Le/La professeur(e)", en: "Teacher/Professor", phonetic: "luh/lah pro-fuh-SUR", example: "Mon professeur est très compétent." },
+                { fr: "L'infirmier/Infirmière", en: "Nurse", phonetic: "lan-fir-mee-ay/ay", example: "Elle travaille comme infirmière." },
+                { fr: "Le/La comptable", en: "Accountant", phonetic: "luh/lah kom-tahbl", example: "Le comptable vérifie nos finances." },
+                { fr: "Le/La cuisinier/Cuisinière", en: "Cook/Chef", phonetic: "luh/lah kwee-zee-nee-ay", example: "Il est cuisinier dans un restaurant." },
+                { fr: "Le/La vendeur/Vendeuse", en: "Salesperson", phonetic: "luh/lah vahn-dur/uz", example: "La vendeuse m'a aidé à trouver une robe." },
+                { fr: "Le/La musicien(ne)", en: "Musician", phonetic: "luh/lah mew-zee-see-an", example: "C'est un musicien très talentueux." },
+                { fr: "L'artiste", en: "Artist", phonetic: "lar-teest", example: "Elle est une artiste peintre." },
+                { fr: "Le/La journaliste", en: "Journalist", phonetic: "luh/lah zhur-nah-leest", example: "Il travaille comme journaliste." },
+                { fr: "Le/La dentiste", en: "Dentist", phonetic: "luh/lah dan-teest", example: "Le dentiste nettoie mes dents." }
+            ],
+            home_furniture: [
+                { fr: "La maison", en: "House", phonetic: "lah meh-ZON", example: "Nous avons une belle maison." },
+                { fr: "La cuisine", en: "Kitchen", phonetic: "lah kwee-ZEEN", example: "La cuisine est moderne." },
+                { fr: "La chambre", en: "Bedroom", phonetic: "lah SHAHM-br", example: "Je dors dans la chambre." },
+                { fr: "Le salon", en: "Living room", phonetic: "luh sah-LON", example: "Nous regardons la télévision dans le salon." },
+                { fr: "La salle de bains", en: "Bathroom", phonetic: "lah sahl de BAN", example: "La salle de bains est petite." },
+                { fr: "La table", en: "Table", phonetic: "lah TAHBL", example: "Nous mangeons à la table." },
+                { fr: "La chaise", en: "Chair", phonetic: "lah SHEZ", example: "La chaise est très confortable." },
+                { fr: "Le lit", en: "Bed", phonetic: "luh LEE", example: "Je dors dans un grand lit." },
+                { fr: "La fenêtre", en: "Window", phonetic: "lah fuh-NET-r", example: "La fenêtre donne sur la rue." },
+                { fr: "La porte", en: "Door", phonetic: "lah PORT", example: "Fermez la porte, s'il vous plaît." },
+                { fr: "Le jardin", en: "Garden", phonetic: "luh zhar-DAN", example: "Nous cultivons des fleurs dans le jardin." },
+                { fr: "L'escalier", en: "Stairs", phonetic: "les-kah-lee-ay", example: "L'escalier mène au premier étage." }
+            ]
+        };
+
+        // Quiz questions data
+        const quizData = {
+            greetings: [
+                { question: "How do you say 'Hello' in French (daytime)?", options: ["Bonsoir", "Bonjour", "Salut", "Bonne nuit"], correct: 1 },
+                { question: "What does 'Au revoir' mean?", options: ["Hello", "Thank you", "Goodbye", "Please"], correct: 2 },
+                { question: "How do you ask 'How are you?' formally?", options: ["Ça va?", "Comment allez-vous?", "Salut ça va?", "Et toi?"], correct: 1 },
+                { question: "What does 'Enchanté(e)' mean?", options: ["Tired", "Nice to meet you", "Confused", "Happy"], correct: 1 }
+            ],
+            family: [
+                { question: "What is 'father' in French?", options: ["Mère", "Père", "Fils", "Frère"], correct: 1 },
+                { question: "How do you say 'sister' in French?", options: ["Frère", "Tante", "Sœur", "Cousine"], correct: 2 },
+                { question: "What does 'grand-mère' mean?", options: ["Grandfather", "Grandmother", "Aunt", "Uncle"], correct: 1 },
+                { question: "How do you say 'cousin' (male) in French?", options: ["Cousine", "Cousin", "Oncle", "Tante"], correct: 1 }
+            ],
+            food: [
+                { question: "What is 'bread' in French?", options: ["Viande", "Pain", "Fromage", "Poulet"], correct: 1 },
+                { question: "How do you say 'cheese' in French?", options: ["Poisson", "Fromage", "Pomme", "Poire"], correct: 1 },
+                { question: "What does 'le poulet' mean?", options: ["Fish", "Chicken", "Meat", "Bread"], correct: 1 },
+                { question: "How do you say 'wine' in French?", options: ["Café", "Vin", "Pain", "Eau"], correct: 1 }
+            ],
+            travel: [
+                { question: "What is 'airplane' in French?", options: ["Train", "Voiture", "Avion", "Gare"], correct: 2 },
+                { question: "How do you say 'hotel' in French?", options: ["Chambre", "Hôtel", "Gare", "Passeport"], correct: 1 },
+                { question: "What does 'le billet' mean?", options: ["Map", "Ticket", "Luggage", "Beach"], correct: 1 },
+                { question: "How do you say 'beach' in French?", options: ["Montagne", "Plage", "Gare", "Valise"], correct: 1 }
+            ],
+            colors: [
+                { question: "What is 'red' in French?", options: ["Bleu", "Rouge", "Jaune", "Vert"], correct: 1 },
+                { question: "How do you say 'blue' in French?", options: ["Bleu", "Vert", "Violet", "Rose"], correct: 0 },
+                { question: "What does 'vert' mean?", options: ["Yellow", "Orange", "Green", "Purple"], correct: 2 },
+                { question: "How do you say 'white' in French?", options: ["Noir", "Blanc", "Gris", "Marron"], correct: 1 }
+            ],
+            days_time: [
+                { question: "What is 'Monday' in French?", options: ["Mardi", "Lundi", "Mercredi", "Vendredi"], correct: 1 },
+                { question: "How do you say 'Friday' in French?", options: ["Jeudi", "Samedi", "Vendredi", "Dimanche"], correct: 2 },
+                { question: "What does 'le matin' mean?", options: ["Evening", "Morning", "Night", "Afternoon"], correct: 1 },
+                { question: "How do you ask 'What time is it?' in French?", options: ["Quel jour?", "Quelle heure est-il?", "C'est quoi?", "À quelle heure?"], correct: 1 }
+            ],
+            body_health: [
+                { question: "What is 'head' in French?", options: ["Bras", "Tête", "Pied", "Jambe"], correct: 1 },
+                { question: "How do you say 'heart' in French?", options: ["Dos", "Estomac", "Cœur", "Main"], correct: 2 },
+                { question: "What does 'malade' mean?", options: ["Healthy", "Tired", "Sick", "Strong"], correct: 2 },
+                { question: "How do you say 'doctor' in French?", options: ["Pharmacie", "Infirmière", "Médecin", "Dentiste"], correct: 2 }
+            ],
+            shopping: [
+                { question: "What is 'store' in French?", options: ["Magasin", "Marché", "Caisse", "Rayon"], correct: 0 },
+                { question: "How do you say 'to buy' in French?", options: ["Vendre", "Acheter", "Payer", "Essayer"], correct: 1 },
+                { question: "What does 'cher' mean?", options: ["Cheap", "Expensive", "Good", "Bad"], correct: 1 },
+                { question: "How do you ask 'How much?' in French?", options: ["Quoi?", "Combien?", "Pourquoi?", "Comment?"], correct: 1 }
+            ],
+            emotions: [
+                { question: "How do you say 'happy' in French?", options: ["Triste", "Heureux", "Fatigué", "Malade"], correct: 1 },
+                { question: "What does 'triste' mean?", options: ["Happy", "Angry", "Sad", "Tired"], correct: 2 },
+                { question: "How do you say 'tired' in French?", options: ["Inquiet", "Surpris", "Fatigué", "Confus"], correct: 2 },
+                { question: "What does 'en colère' mean?", options: ["Excited", "Angry", "Confused", "Proud"], correct: 1 }
+            ],
+            weather: [
+                { question: "How do you say 'It's hot' in French?", options: ["Il fait froid", "Il pleut", "Il fait chaud", "Il neige"], correct: 2 },
+                { question: "What does 'Il pleut' mean?", options: ["It's snowing", "It's raining", "It's windy", "It's sunny"], correct: 1 },
+                { question: "How do you say 'the sun' in French?", options: ["La pluie", "Le soleil", "Le vent", "Les nuages"], correct: 1 },
+                { question: "What does 'un orage' mean?", options: ["Rain", "Cloud", "Storm", "Snow"], correct: 2 }
+            ],
+            professions: [
+                { question: "What is 'doctor' in French?", options: ["Avocat", "Médecin", "Professeur", "Infirmier"], correct: 1 },
+                { question: "How do you say 'lawyer' in French?", options: ["Avocat", "Dentiste", "Cuisinier", "Musicien"], correct: 0 },
+                { question: "What does 'professeur' mean?", options: ["Engineer", "Teacher", "Journalist", "Artist"], correct: 1 },
+                { question: "How do you say 'nurse' in French?", options: ["Médecin", "Infirmière", "Pharmacienne", "Dentiste"], correct: 1 }
+            ],
+            home_furniture: [
+                { question: "What is 'house' in French?", options: ["Chambre", "Maison", "Cuisine", "Salon"], correct: 1 },
+                { question: "How do you say 'bedroom' in French?", options: ["Chambre", "Cuisine", "Salon", "Salle de bains"], correct: 0 },
+                { question: "What does 'table' mean in French?", options: ["Chair", "Table", "Bed", "Door"], correct: 1 },
+                { question: "How do you say 'window' in French?", options: ["Porte", "Fenêtre", "Escalier", "Jardin"], correct: 1 }
+            ]
+        };
+
+        // Current flashcard index
+        let currentFlashcardIndex = 0;
+        let currentTopic = 'greetings';
+        let quizQuestions = [];
+        let currentQuizQuestion = 0;
+        let quizScore = 0;
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                showSection(sectionId);
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                scrollToTop();
+            });
+        });
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            if (sectionId === 'flashcards') {
+                initFlashcards();
+            } else if (sectionId === 'quiz') {
+                document.getElementById('quizContainer').innerHTML = '';
+            }
+        }
+
+        function showLesson(topicId) {
+            currentTopic = topicId;
+            const content = document.getElementById('lessonContent');
+            const vocab = vocabularyData[topicId] || [];
+
+            let html = '<h3 style="color: #002395; margin-bottom: 20px;">📖 Vocabulary</h3>';
+            html += '<div class="vocabulary-list">';
+
+            vocab.forEach(item => {
+                html += `
+                    <div class="vocab-item">
+                        <div class="vocab-french">${item.fr}</div>
+                        <div class="vocab-english">${item.en}</div>
+                        <div class="vocab-phonetic">${item.phonetic}</div>
+                        <div class="vocab-example">"${item.example}"</div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        function initFlashcards() {
+            const topic = document.getElementById('flashcardTopic').value;
+            currentTopic = topic;
+            currentFlashcardIndex = 0;
+            displayFlashcard();
+        }
+
+        function displayFlashcard() {
+            const vocab = vocabularyData[currentTopic] || [];
+            if (vocab.length === 0) return;
+
+            const item = vocab[currentFlashcardIndex];
+            let isFlipped = false;
+
+            const container = document.getElementById('flashcardContainer');
+            container.innerHTML = `
+                <div class="flashcard" onclick="flipCard(this)">
+                    <div class="flashcard-label">Click to reveal</div>
+                    <div class="flashcard-text">${item.fr}</div>
+                </div>
+                <div class="button-group" style="margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="previousFlashcard()">← Previous</button>
+                    <span style="color: #666; padding: 12px 20px;">${currentFlashcardIndex + 1} / ${vocab.length}</span>
+                    <button class="btn btn-secondary" onclick="nextFlashcard()">Next →</button>
+                </div>
+            `;
+        }
+
+        function flipCard(element) {
+            const vocab = vocabularyData[currentTopic];
+            const item = vocab[currentFlashcardIndex];
+            const text = element.querySelector('.flashcard-text');
+            const label = element.querySelector('.flashcard-label');
+
+            if (text.textContent === item.fr) {
+                text.textContent = item.en;
+                label.textContent = 'Pronunciation: ' + item.phonetic;
+                element.classList.add('flip');
+            } else {
+                text.textContent = item.fr;
+                label.textContent = 'Click to reveal';
+                element.classList.remove('flip');
+            }
+        }
+
+        function nextFlashcard() {
+            const vocab = vocabularyData[currentTopic];
+            currentFlashcardIndex = (currentFlashcardIndex + 1) % vocab.length;
+            displayFlashcard();
+        }
+
+        function previousFlashcard() {
+            const vocab = vocabularyData[currentTopic];
+            currentFlashcardIndex = (currentFlashcardIndex - 1 + vocab.length) % vocab.length;
+            displayFlashcard();
+        }
+
+        function startQuiz() {
+            const topic = document.getElementById('quizTopic').value;
+            currentTopic = topic;
+            quizQuestions = quizData[topic] || [];
+            currentQuizQuestion = 0;
+            quizScore = 0;
+            displayQuizQuestion();
+        }
+
+        function displayQuizQuestion() {
+            if (currentQuizQuestion >= quizQuestions.length) {
+                displayQuizResults();
+                return;
+            }
+
+            const q = quizQuestions[currentQuizQuestion];
+            const progress = ((currentQuizQuestion + 1) / quizQuestions.length) * 100;
+
+            let html = `
+                <div class="quiz-progress">
+                    <div class="quiz-progress-bar" style="width: ${progress}%;"></div>
+                </div>
+                <div class="question">
+                    <h3>${q.question}</h3>
+                    <div class="options">
+            `;
+
+            q.options.forEach((option, index) => {
+                html += `<button class="option-btn" onclick="answerQuestion(${index})">${option}</button>`;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('quizContainer').innerHTML = html;
+        }
+
+        function answerQuestion(selectedIndex) {
+            const q = quizQuestions[currentQuizQuestion];
+            const buttons = document.querySelectorAll('.option-btn');
+
+            buttons.forEach((btn, index) => {
+                if (index === q.correct) {
+                    btn.classList.add('correct');
+                } else if (index === selectedIndex && selectedIndex !== q.correct) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            if (selectedIndex === q.correct) {
+                quizScore++;
+            }
+
+            setTimeout(() => {
+                currentQuizQuestion++;
+                displayQuizQuestion();
+            }, 1500);
+        }
+
+        function displayQuizResults() {
+            const total = quizQuestions.length;
+            const percentage = Math.round((quizScore / total) * 100);
+
+            let message = '';
+            if (percentage === 100) {
+                message = 'Perfect score! Excellent work!';
+            } else if (percentage >= 80) {
+                message = 'Great job! You\'re doing well!';
+            } else if (percentage >= 60) {
+                message = 'Good effort! Keep practicing!';
+            } else {
+                message = 'Keep studying! You\'ll improve!';
+            }
+
+            const html = `
+                <div class="score-display">
+                    <h2>Quiz Complete!</h2>
+                    <div class="score-value">${quizScore} / ${total}</div>
+                    <p class="score-message">${percentage}% - ${message}</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('quizTopic').focus(); document.getElementById('quizContainer').innerHTML = '';">Take Another Quiz</button>
+                </div>
+            `;
+
+            document.getElementById('quizContainer').innerHTML = html;
+        }
+
+        document.getElementById('flashcardTopic').addEventListener('change', function() {
+            currentTopic = this.value;
+            initFlashcards();
+        });
+
+        // Scroll to top functionality
+        window.addEventListener('scroll', function() {
+            const scrollBtn = document.getElementById('scrollBtn');
+            if (window.scrollY > 300) {
+                scrollBtn.classList.add('show');
+            } else {
+                scrollBtn.classList.remove('show');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Initialize
+        showLesson('greetings');
+
+        // ═══════════════════════════════════════════════════════
+        // PWA: Service Worker Registration & Install Prompt
+        // ═══════════════════════════════════════════════════════
+
+        // Register service worker for offline caching
+        if ('serviceWorker' in navigator) {
+            // Create service worker from inline blob
+            const swCode = `
+                const CACHE_NAME = 'learn-french-v2';
+                const OFFLINE_URL = '/';
+
+                self.addEventListener('install', (event) => {
+                    self.skipWaiting();
+                });
+
+                self.addEventListener('activate', (event) => {
+                    event.waitUntil(
+                        caches.keys().then(keys =>
+                            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+                        ).then(() => self.clients.claim())
+                    );
+                });
+
+                self.addEventListener('fetch', (event) => {
+                    if (event.request.method !== 'GET') return;
+                    event.respondWith(
+                        fetch(event.request)
+                            .then(response => {
+                                const clone = response.clone();
+                                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                                return response;
+                            })
+                            .catch(() => caches.match(event.request))
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(swBlob);
+
+            navigator.serviceWorker.register(swURL, { scope: '.' }).then(reg => {
+                console.log('PWA: Service worker registered', reg.scope);
+            }).catch(err => {
+                console.log('PWA: Service worker registration skipped (normal for file:// protocol)', err);
+            });
+        }
+
+        // iOS install prompt (Safari only, not already in standalone)
+        function showIOSInstallPrompt() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            const dismissed = sessionStorage.getItem('pwa-dismissed');
+
+            if (isIOS && !isStandalone && !dismissed) {
+                // Show after a short delay so user sees the app first
+                setTimeout(() => {
+                    const banner = document.getElementById('pwa-install-banner');
+                    if (banner) banner.classList.add('show');
+                }, 3000);
+            }
+        }
+
+        function dismissInstallBanner() {
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) banner.classList.remove('show');
+            sessionStorage.setItem('pwa-dismissed', 'true');
+        }
+
+        // Android/Chrome install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.innerHTML = `
+                    <button class="pwa-dismiss" onclick="dismissInstallBanner()">×</button>
+                    <p><strong>Install Learn French</strong></p>
+                    <p style="font-size:0.85em; opacity:0.9; margin-bottom:12px;">Add to your home screen for quick access & offline use</p>
+                    <button onclick="installPWA()" style="background:white; color:#002395; border:none; padding:10px 24px; border-radius:8px; font-weight:bold; font-size:0.9em; cursor:pointer;">Install App</button>
+                `;
+                banner.classList.add('show');
+            }
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(result => {
+                    deferredPrompt = null;
+                    dismissInstallBanner();
+                });
+            }
+        }
+
+        // Persist data using localStorage
+        function saveProgress() {
+            const data = { xp: totalXP, streak: streak, completedTopics: Array.from(completedTopics || []) };
+            try { localStorage.setItem('learnFrenchProgress', JSON.stringify(data)); } catch(e) {}
+        }
+
+        function loadProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem('learnFrenchProgress'));
+                if (data) {
+                    totalXP = data.xp || 0;
+                    streak = data.streak || 1;
+                    if (data.completedTopics) completedTopics = new Set(data.completedTopics);
+                    updateStats();
+                }
+            } catch(e) {}
+        }
+
+        // Save on XP changes
+        const origAddXP = typeof addXP === 'function' ? addXP : null;
+        if (origAddXP) {
+            window._origAddXP = origAddXP;
+        }
+
+        // Auto-save periodically
+        setInterval(saveProgress, 30000);
+        window.addEventListener('beforeunload', saveProgress);
+        window.addEventListener('pagehide', saveProgress);
+
+        // Load saved progress
+        loadProgress();
+
+        // Trigger iOS install banner check
+        showIOSInstallPrompt();
+    </script>
+
+    <!-- PWA Install Banner (for iOS Safari) -->
+    <div id="pwa-install-banner" class="pwa-install-banner">
+        <button class="pwa-dismiss" onclick="dismissInstallBanner()">×</button>
+        <p><strong>Install Learn French on your iPhone</strong></p>
+        <div class="pwa-install-steps">
+            <span>Tap</span>
+            <span style="font-size:1.4em;">⎙</span>
+            <span>(Share)</span>
+            <span>→</span>
+            <span>then "Add to Home Screen"</span>
+        </div>
+    </div>
+</body>
+</html>

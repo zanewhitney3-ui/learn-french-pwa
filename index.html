@@ -2284,6 +2284,7 @@
 
             const q = quizQuestions[currentQuizQuestion];
             const progress = ((currentQuizQuestion + 1) / quizQuestions.length) * 100;
+            const isLast = currentQuizQuestion >= quizQuestions.length - 1;
 
             let html = `
                 <div class="quiz-progress">
@@ -2308,8 +2309,19 @@
                 html += `<button class="option-btn" onclick="answerQuestion(${index})">${option}</button>`;
             });
             html += '</div>';
-            html += '<div id="quizNextWrapper" style="margin-top: 20px; text-align: center;"></div>';
-            html += '</div>';
+
+            // Pre-render the feedback line + Next button (disabled until an answer is tapped)
+            html += `
+                <div id="quizFeedback" style="text-align: center; margin-top: 22px; min-height: 28px; font-weight: 700; font-size: 1.1em; color: #999;">
+                    Pick an answer above
+                </div>
+                <div style="text-align: center; margin-top: 12px; margin-bottom: 30px;">
+                    <button id="quizNextBtn" class="btn btn-primary" disabled
+                            style="font-size: 1.1em; padding: 16px 40px; width: 100%; max-width: 320px; opacity: 0.45; cursor: not-allowed;">
+                        ${isLast ? 'See Score →' : 'Next Question →'}
+                    </button>
+                </div>
+            </div>`;
 
             document.getElementById('quizContainer').innerHTML = html;
 
@@ -2338,32 +2350,26 @@
             const isCorrect = selectedIndex === q.correct;
             if (isCorrect) {
                 quizScore++;
-                if (typeof Progress !== 'undefined') Progress.addXP(10);
+                try { if (typeof Progress !== 'undefined') Progress.addXP(10); } catch(e) {}
             }
 
-            const isLast = currentQuizQuestion >= quizQuestions.length - 1;
-            const wrapper = document.getElementById('quizNextWrapper');
-            if (wrapper) {
-                const feedbackColor = isCorrect ? '#2e7d32' : '#c62828';
-                const feedbackText = isCorrect ? '✓ Correct!' : `✗ Correct answer: ${q.options[q.correct]}`;
-                wrapper.innerHTML = `
-                    <div style="color: ${feedbackColor}; font-weight: 700; font-size: 1.1em; margin-bottom: 14px;">
-                        ${feedbackText}
-                    </div>
-                    <button class="btn btn-primary quiz-next-pulse" onclick="advanceQuiz()"
-                            style="font-size: 1.1em; padding: 16px 40px; width: 100%; max-width: 320px;">
-                        ${isLast ? 'See Score →' : 'Next Question →'}
-                    </button>
-                `;
-                // Make sure the user can see the Next button — auto-scroll it into view
+            // Update the (already-rendered) feedback line
+            const feedback = document.getElementById('quizFeedback');
+            if (feedback) {
+                feedback.style.color = isCorrect ? '#2e7d32' : '#c62828';
+                feedback.textContent = isCorrect ? '✓ Correct!' : '✗ Correct answer: ' + q.options[q.correct];
+            }
+
+            // Activate the (already-rendered) Next button
+            const nextBtn = document.getElementById('quizNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.classList.add('quiz-next-pulse');
+                nextBtn.onclick = advanceQuiz;
                 setTimeout(() => {
-                    try {
-                        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } catch(e) {
-                        // Fallback for older Safari
-                        const top = wrapper.getBoundingClientRect().top + window.pageYOffset - 200;
-                        window.scrollTo({ top: top, behavior: 'smooth' });
-                    }
+                    try { nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
                 }, 100);
             }
         }

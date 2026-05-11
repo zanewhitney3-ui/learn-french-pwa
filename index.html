@@ -2239,6 +2239,42 @@
         };
         const TENSE_ORDER = ['present', 'passe_compose', 'imparfait', 'futur_simple'];
 
+        // Per-verb English glosses for each tense
+        // Order matches TENSE_ORDER: [present, passé composé, imparfait, futur simple]
+        const VERB_GLOSSES = {
+            etre:       ["I am",        "I was / I have been",     "I used to be",          "I will be"],
+            avoir:      ["I have",      "I had / I have had",      "I used to have",        "I will have"],
+            aller:      ["I go",        "I went / I have gone",    "I used to go",          "I will go"],
+            faire:      ["I do",        "I did / I have done",     "I used to do",          "I will do"],
+            dire:       ["I say",       "I said / I have said",    "I used to say",         "I will say"],
+            pouvoir:    ["I can",       "I could / I was able to", "I used to be able to",  "I will be able to"],
+            vouloir:    ["I want",      "I wanted",                "I used to want",        "I will want"],
+            savoir:     ["I know",      "I knew / I found out",    "I used to know",        "I will know"],
+            voir:       ["I see",       "I saw / I have seen",     "I used to see",         "I will see"],
+            venir:      ["I come",      "I came / I have come",    "I used to come",        "I will come"],
+            prendre:    ["I take",      "I took / I have taken",   "I used to take",        "I will take"],
+            mettre:     ["I put",       "I put / I have put",      "I used to put",         "I will put"],
+            parler:     ["I speak",     "I spoke / I have spoken", "I used to speak",       "I will speak"],
+            aimer:      ["I love",      "I loved / I have loved",  "I used to love",        "I will love"],
+            manger:     ["I eat",       "I ate / I have eaten",    "I used to eat",         "I will eat"],
+            boire:      ["I drink",     "I drank / I have drunk",  "I used to drink",       "I will drink"],
+            habiter:    ["I live",      "I lived / I have lived",  "I used to live",        "I will live"],
+            finir:      ["I finish",    "I finished",              "I used to finish",      "I will finish"],
+            partir:     ["I leave",     "I left / I have left",    "I used to leave",       "I will leave"],
+            lire:       ["I read",      "I read / I have read",    "I used to read",        "I will read"],
+            se_appeler: ["my name is",  "my name was",             "my name used to be",    "my name will be"],
+            se_lever:   ["I get up",    "I got up",                "I used to get up",      "I will get up"],
+            se_laver:   ["I wash up",   "I washed up",             "I used to wash up",     "I will wash up"],
+            se_coucher: ["I go to bed", "I went to bed",           "I used to go to bed",   "I will go to bed"]
+        };
+
+        function tenseGloss(verbId, tense) {
+            const arr = VERB_GLOSSES[verbId];
+            if (!arr) return TENSES[tense] ? TENSES[tense].sub : '';
+            const idx = TENSE_ORDER.indexOf(tense);
+            return idx >= 0 ? arr[idx] : '';
+        }
+
         // Helper to build a tense block of 6 forms.
         // Each input is a 6-array of [pron, conj, spoken] arrays.
         // Optional 4th element is [example_fr, example_en] (only used on present).
@@ -3165,6 +3201,18 @@
             return ts && ts.value in TENSES ? ts.value : 'present';
         }
 
+        function refreshTenseDropdown(verbId) {
+            const tenseSel = document.getElementById('tenseSelect');
+            if (!tenseSel) return;
+            const keep = tenseSel.value && tenseSel.value in TENSES ? tenseSel.value : 'present';
+            tenseSel.innerHTML = TENSE_ORDER.map(t => {
+                const label = TENSES[t].label;
+                const gloss = tenseGloss(verbId, t);
+                return `<option value="${t}">${label}${gloss ? ' (' + gloss + ')' : ''}</option>`;
+            }).join('');
+            tenseSel.value = keep;
+        }
+
         function populateVerbSelect() {
             const sel = document.getElementById('verbSelect');
             if (!sel || sel.dataset.populated) return;
@@ -3173,7 +3221,11 @@
                 `<option value="${id}">${v.infinitive} — ${v.en}</option>`
             ).join('');
             sel.innerHTML = html;
-            sel.addEventListener('change', () => showConjugation(sel.value, _currentTense()));
+            refreshTenseDropdown(sel.value);
+            sel.addEventListener('change', () => {
+                refreshTenseDropdown(sel.value);
+                showConjugation(sel.value, _currentTense());
+            });
             const tenseSel = document.getElementById('tenseSelect');
             if (tenseSel) tenseSel.addEventListener('change', () => showConjugation(sel.value, tenseSel.value));
             const practiceBtn = document.getElementById('conjPracticeBtn');
@@ -3197,7 +3249,7 @@
                     </div>
                     <div class="conj-tense-bar">
                         <div class="conj-tense-label">${tInfo.label}</div>
-                        <div class="conj-tense-sub">${tInfo.sub}</div>
+                        <div class="conj-tense-sub">${tenseGloss(verbId, tense) || tInfo.sub}</div>
                     </div>
             `;
             forms.forEach(form => {

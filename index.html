@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Learn French - Interactive Language App</title>
 
+    <!-- Cache-busting: never serve a stale HTML shell -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -952,6 +957,42 @@
             font-size: 0.85em;
             opacity: 0.9;
         }
+
+        /* Version / update footer */
+        .app-version {
+            text-align: center;
+            padding: 24px 20px 40px;
+            color: #888;
+            font-size: 0.82em;
+        }
+        .app-version button {
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #555;
+            margin-top: 8px;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-version button:hover, .app-version button:active {
+            border-color: #002395;
+            color: #002395;
+            background: #f0f4ff;
+        }
+        .app-version button.has-update {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            border-color: transparent;
+            animation: updatePulse 1.4s ease-in-out infinite;
+            font-weight: 600;
+        }
+        @keyframes updatePulse {
+            0%, 100% { box-shadow: 0 2px 6px rgba(0, 35, 149, 0.3); }
+            50% { box-shadow: 0 4px 18px rgba(225, 0, 15, 0.5); }
+        }
     </style>
 </head>
 <body>
@@ -1789,6 +1830,11 @@
         </div>
     </div>
 
+    <div class="app-version">
+        <div>Learn French <span id="appVersionLabel">v4</span></div>
+        <button id="updateBtn" onclick="checkForUpdates()">Check for updates</button>
+    </div>
+
     <button class="scroll-to-top" id="scrollBtn" onclick="scrollToTop()">↑</button>
 
     <div class="speed-control" id="speedControl" role="group" aria-label="Pronunciation speed">
@@ -2538,46 +2584,66 @@
         // PWA: Service Worker Registration & Install Prompt
         // ═══════════════════════════════════════════════════════
 
-        // Register service worker for offline caching
-        if ('serviceWorker' in navigator) {
-            // Create service worker from inline blob
-            const swCode = `
-                const CACHE_NAME = 'learn-french-v3';
-                const OFFLINE_URL = '/';
+        // Register service worker for offline caching + auto-update detection
+        const APP_VERSION = 'v4';
+        let pendingWorker = null;
 
-                self.addEventListener('install', (event) => {
-                    self.skipWaiting();
-                });
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' })
+                .then(reg => {
+                    // Force an immediate update check on each load
+                    reg.update().catch(() => {});
+                    if (reg.waiting) showUpdateReady(reg.waiting);
+                    reg.addEventListener('updatefound', () => {
+                        const nw = reg.installing;
+                        if (!nw) return;
+                        nw.addEventListener('statechange', () => {
+                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateReady(nw);
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.log('PWA: SW registration failed', err));
 
-                self.addEventListener('activate', (event) => {
-                    event.waitUntil(
-                        caches.keys().then(keys =>
-                            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-                        ).then(() => self.clients.claim())
-                    );
-                });
-
-                self.addEventListener('fetch', (event) => {
-                    if (event.request.method !== 'GET') return;
-                    event.respondWith(
-                        fetch(event.request)
-                            .then(response => {
-                                const clone = response.clone();
-                                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                                return response;
-                            })
-                            .catch(() => caches.match(event.request))
-                    );
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'application/javascript' });
-            const swURL = URL.createObjectURL(swBlob);
-
-            navigator.serviceWorker.register(swURL, { scope: '.' }).then(reg => {
-                console.log('PWA: Service worker registered', reg.scope);
-            }).catch(err => {
-                console.log('PWA: Service worker registration skipped (normal for file:// protocol)', err);
+            let _reloading = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (_reloading) return;
+                _reloading = true;
+                window.location.reload();
             });
+        }
+
+        function showUpdateReady(worker) {
+            pendingWorker = worker;
+            const btn = document.getElementById('updateBtn');
+            if (btn) {
+                btn.classList.add('has-update');
+                btn.textContent = '🔄 Update available — tap to install';
+            }
+        }
+
+        function checkForUpdates() {
+            if (pendingWorker) {
+                pendingWorker.postMessage({ type: 'SKIP_WAITING' });
+                return;
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (!reg) { window.location.reload(); return; }
+                    reg.update().then(() => {
+                        // Give the browser a moment to detect a new worker
+                        setTimeout(() => {
+                            if (!pendingWorker) {
+                                // No new version; just hard-reload from network
+                                window.location.reload();
+                            }
+                        }, 800);
+                    }).catch(() => window.location.reload());
+                });
+            } else {
+                window.location.reload();
+            }
         }
 
         // iOS install prompt (Safari only, not already in standalone)

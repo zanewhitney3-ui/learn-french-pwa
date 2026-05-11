@@ -994,6 +994,94 @@
             50% { box-shadow: 0 4px 18px rgba(225, 0, 15, 0.5); }
         }
 
+        /* Conjugation section */
+        .conj-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+        .conj-header {
+            background: linear-gradient(135deg, #002395 0%, #E1000F 100%);
+            color: white;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .conj-infinitive {
+            font-size: 1.8em;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .conj-english {
+            font-size: 1.05em;
+            opacity: 0.92;
+        }
+        .conj-type {
+            background: rgba(255,255,255,0.22);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .conj-row {
+            padding: 14px 18px;
+            border-bottom: 1px solid #eee;
+        }
+        .conj-row:last-child { border-bottom: none; }
+        .conj-row-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .conj-pronoun {
+            color: #666;
+            font-weight: 600;
+            min-width: 78px;
+            font-size: 0.95em;
+        }
+        .conj-form {
+            color: #002395;
+            font-weight: 700;
+            font-size: 1.4em;
+            flex: 1;
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0, 35, 149, 0.1);
+        }
+        .conj-example-row {
+            margin-top: 10px;
+            margin-left: 90px;
+            padding: 10px 14px;
+            background: #f8f9fc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .conj-example-text { flex: 1; min-width: 0; }
+        .conj-example-fr {
+            color: #002395;
+            font-weight: 500;
+            font-size: 0.98em;
+        }
+        .conj-example-en {
+            color: #777;
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        @media (max-width: 768px) {
+            .conj-example-row { margin-left: 0; }
+            .conj-pronoun { min-width: 62px; }
+            .conj-infinitive { font-size: 1.5em; }
+            .conj-form { font-size: 1.25em; }
+            .conj-type { margin-left: 0; }
+        }
+
         /* Quiz Next button — pulse to draw attention */
         .quiz-next-pulse {
             animation: nextPulse 1.2s ease-in-out infinite;
@@ -1040,6 +1128,7 @@
             <button class="nav-btn" data-section="quiz">Quiz</button>
             <button class="nav-btn" data-section="phrases">Phrases</button>
             <button class="nav-btn" data-section="numbers">Numbers</button>
+            <button class="nav-btn" data-section="conjugation">Conjugation</button>
             <button class="nav-btn" data-section="grammar">Grammar</button>
             <button class="nav-btn" data-section="progress">Progress</button>
         </nav>
@@ -1520,6 +1609,19 @@
                         <div class="number-english">Thousand</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- CONJUGATION SECTION -->
+            <div id="conjugation" class="section">
+                <h2 style="color: #002395; margin-bottom: 16px;">🔄 Verb Conjugation</h2>
+                <div class="audio-hint">🔊 Tap any conjugated form to hear it with its pronoun (e.g., "Je suis"). Use the speed pill at the bottom-left to slow it down.</div>
+
+                <div class="quiz-controls">
+                    <select id="verbSelect" aria-label="Choose a verb"></select>
+                    <button class="btn btn-primary" id="conjPracticeBtn">Practice this verb →</button>
+                </div>
+
+                <div id="conjugationContent" style="margin-top: 8px;"></div>
             </div>
 
             <!-- GRAMMAR SECTION -->
@@ -2102,6 +2204,142 @@
             ]
         };
 
+        // Verb conjugation data (present tense)
+        const verbsData = {
+            etre: {
+                infinitive: "être", en: "to be", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "suis", spoken: "Je suis", example: "Je suis content.", exEn: "I am happy." },
+                    { pron: "Tu", conj: "es", spoken: "Tu es", example: "Tu es intelligent.", exEn: "You are smart." },
+                    { pron: "Il/Elle", conj: "est", spoken: "Il est", example: "Elle est ici.", exEn: "She is here." },
+                    { pron: "Nous", conj: "sommes", spoken: "Nous sommes", example: "Nous sommes amis.", exEn: "We are friends." },
+                    { pron: "Vous", conj: "êtes", spoken: "Vous êtes", example: "Vous êtes prêts ?", exEn: "Are you ready?" },
+                    { pron: "Ils/Elles", conj: "sont", spoken: "Ils sont", example: "Ils sont heureux.", exEn: "They are happy." }
+                ]
+            },
+            avoir: {
+                infinitive: "avoir", en: "to have", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "ai", spoken: "J'ai", example: "J'ai un chat.", exEn: "I have a cat." },
+                    { pron: "Tu", conj: "as", spoken: "Tu as", example: "Tu as une voiture.", exEn: "You have a car." },
+                    { pron: "Il/Elle", conj: "a", spoken: "Il a", example: "Elle a un livre.", exEn: "She has a book." },
+                    { pron: "Nous", conj: "avons", spoken: "Nous avons", example: "Nous avons une maison.", exEn: "We have a house." },
+                    { pron: "Vous", conj: "avez", spoken: "Vous avez", example: "Vous avez des enfants.", exEn: "You have children." },
+                    { pron: "Ils/Elles", conj: "ont", spoken: "Ils ont", example: "Ils ont un chien.", exEn: "They have a dog." }
+                ]
+            },
+            aller: {
+                infinitive: "aller", en: "to go", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "vais", spoken: "Je vais", example: "Je vais à l'école.", exEn: "I'm going to school." },
+                    { pron: "Tu", conj: "vas", spoken: "Tu vas", example: "Tu vas au cinéma.", exEn: "You're going to the cinema." },
+                    { pron: "Il/Elle", conj: "va", spoken: "Il va", example: "Elle va au marché.", exEn: "She's going to the market." },
+                    { pron: "Nous", conj: "allons", spoken: "Nous allons", example: "Nous allons en France.", exEn: "We're going to France." },
+                    { pron: "Vous", conj: "allez", spoken: "Vous allez", example: "Vous allez bien ?", exEn: "Are you doing well?" },
+                    { pron: "Ils/Elles", conj: "vont", spoken: "Ils vont", example: "Ils vont à la plage.", exEn: "They're going to the beach." }
+                ]
+            },
+            faire: {
+                infinitive: "faire", en: "to do / to make", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "fais", spoken: "Je fais", example: "Je fais mes devoirs.", exEn: "I'm doing my homework." },
+                    { pron: "Tu", conj: "fais", spoken: "Tu fais", example: "Tu fais du sport.", exEn: "You do sports." },
+                    { pron: "Il/Elle", conj: "fait", spoken: "Il fait", example: "Il fait beau.", exEn: "The weather is nice." },
+                    { pron: "Nous", conj: "faisons", spoken: "Nous faisons", example: "Nous faisons un gâteau.", exEn: "We're making a cake." },
+                    { pron: "Vous", conj: "faites", spoken: "Vous faites", example: "Vous faites quoi ?", exEn: "What are you doing?" },
+                    { pron: "Ils/Elles", conj: "font", spoken: "Ils font", example: "Ils font la cuisine.", exEn: "They're cooking." }
+                ]
+            },
+            parler: {
+                infinitive: "parler", en: "to speak", type: "regular (-er)",
+                forms: [
+                    { pron: "Je", conj: "parle", spoken: "Je parle", example: "Je parle français.", exEn: "I speak French." },
+                    { pron: "Tu", conj: "parles", spoken: "Tu parles", example: "Tu parles anglais.", exEn: "You speak English." },
+                    { pron: "Il/Elle", conj: "parle", spoken: "Il parle", example: "Elle parle lentement.", exEn: "She speaks slowly." },
+                    { pron: "Nous", conj: "parlons", spoken: "Nous parlons", example: "Nous parlons ensemble.", exEn: "We speak together." },
+                    { pron: "Vous", conj: "parlez", spoken: "Vous parlez", example: "Vous parlez bien.", exEn: "You speak well." },
+                    { pron: "Ils/Elles", conj: "parlent", spoken: "Ils parlent", example: "Ils parlent espagnol.", exEn: "They speak Spanish." }
+                ]
+            },
+            aimer: {
+                infinitive: "aimer", en: "to love / to like", type: "regular (-er)",
+                forms: [
+                    { pron: "Je", conj: "aime", spoken: "J'aime", example: "J'aime le chocolat.", exEn: "I love chocolate." },
+                    { pron: "Tu", conj: "aimes", spoken: "Tu aimes", example: "Tu aimes danser.", exEn: "You like to dance." },
+                    { pron: "Il/Elle", conj: "aime", spoken: "Il aime", example: "Elle aime lire.", exEn: "She likes to read." },
+                    { pron: "Nous", conj: "aimons", spoken: "Nous aimons", example: "Nous aimons Paris.", exEn: "We love Paris." },
+                    { pron: "Vous", conj: "aimez", spoken: "Vous aimez", example: "Vous aimez la musique ?", exEn: "Do you like music?" },
+                    { pron: "Ils/Elles", conj: "aiment", spoken: "Ils aiment", example: "Ils aiment voyager.", exEn: "They like to travel." }
+                ]
+            },
+            manger: {
+                infinitive: "manger", en: "to eat", type: "regular (-er)",
+                forms: [
+                    { pron: "Je", conj: "mange", spoken: "Je mange", example: "Je mange une pomme.", exEn: "I'm eating an apple." },
+                    { pron: "Tu", conj: "manges", spoken: "Tu manges", example: "Tu manges vite.", exEn: "You eat fast." },
+                    { pron: "Il/Elle", conj: "mange", spoken: "Il mange", example: "Il mange au restaurant.", exEn: "He's eating at the restaurant." },
+                    { pron: "Nous", conj: "mangeons", spoken: "Nous mangeons", example: "Nous mangeons ensemble.", exEn: "We eat together." },
+                    { pron: "Vous", conj: "mangez", spoken: "Vous mangez", example: "Vous mangez bien.", exEn: "You eat well." },
+                    { pron: "Ils/Elles", conj: "mangent", spoken: "Ils mangent", example: "Ils mangent du pain.", exEn: "They eat bread." }
+                ]
+            },
+            habiter: {
+                infinitive: "habiter", en: "to live (somewhere)", type: "regular (-er)",
+                forms: [
+                    { pron: "Je", conj: "habite", spoken: "J'habite", example: "J'habite à Paris.", exEn: "I live in Paris." },
+                    { pron: "Tu", conj: "habites", spoken: "Tu habites", example: "Tu habites où ?", exEn: "Where do you live?" },
+                    { pron: "Il/Elle", conj: "habite", spoken: "Il habite", example: "Elle habite en France.", exEn: "She lives in France." },
+                    { pron: "Nous", conj: "habitons", spoken: "Nous habitons", example: "Nous habitons ici.", exEn: "We live here." },
+                    { pron: "Vous", conj: "habitez", spoken: "Vous habitez", example: "Vous habitez en ville ?", exEn: "Do you live in the city?" },
+                    { pron: "Ils/Elles", conj: "habitent", spoken: "Ils habitent", example: "Ils habitent près d'ici.", exEn: "They live nearby." }
+                ]
+            },
+            vouloir: {
+                infinitive: "vouloir", en: "to want", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "veux", spoken: "Je veux", example: "Je veux un café.", exEn: "I want a coffee." },
+                    { pron: "Tu", conj: "veux", spoken: "Tu veux", example: "Tu veux manger ?", exEn: "Do you want to eat?" },
+                    { pron: "Il/Elle", conj: "veut", spoken: "Il veut", example: "Elle veut partir.", exEn: "She wants to leave." },
+                    { pron: "Nous", conj: "voulons", spoken: "Nous voulons", example: "Nous voulons du pain.", exEn: "We want some bread." },
+                    { pron: "Vous", conj: "voulez", spoken: "Vous voulez", example: "Vous voulez quoi ?", exEn: "What do you want?" },
+                    { pron: "Ils/Elles", conj: "veulent", spoken: "Ils veulent", example: "Ils veulent dormir.", exEn: "They want to sleep." }
+                ]
+            },
+            pouvoir: {
+                infinitive: "pouvoir", en: "to be able / can", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "peux", spoken: "Je peux", example: "Je peux t'aider.", exEn: "I can help you." },
+                    { pron: "Tu", conj: "peux", spoken: "Tu peux", example: "Tu peux venir ?", exEn: "Can you come?" },
+                    { pron: "Il/Elle", conj: "peut", spoken: "Il peut", example: "Elle peut nager.", exEn: "She can swim." },
+                    { pron: "Nous", conj: "pouvons", spoken: "Nous pouvons", example: "Nous pouvons partir.", exEn: "We can leave." },
+                    { pron: "Vous", conj: "pouvez", spoken: "Vous pouvez", example: "Vous pouvez entrer.", exEn: "You can come in." },
+                    { pron: "Ils/Elles", conj: "peuvent", spoken: "Ils peuvent", example: "Ils peuvent attendre.", exEn: "They can wait." }
+                ]
+            },
+            prendre: {
+                infinitive: "prendre", en: "to take", type: "irregular",
+                forms: [
+                    { pron: "Je", conj: "prends", spoken: "Je prends", example: "Je prends le bus.", exEn: "I take the bus." },
+                    { pron: "Tu", conj: "prends", spoken: "Tu prends", example: "Tu prends un café ?", exEn: "Are you having a coffee?" },
+                    { pron: "Il/Elle", conj: "prend", spoken: "Il prend", example: "Elle prend une photo.", exEn: "She's taking a photo." },
+                    { pron: "Nous", conj: "prenons", spoken: "Nous prenons", example: "Nous prenons le train.", exEn: "We take the train." },
+                    { pron: "Vous", conj: "prenez", spoken: "Vous prenez", example: "Vous prenez quoi ?", exEn: "What will you have?" },
+                    { pron: "Ils/Elles", conj: "prennent", spoken: "Ils prennent", example: "Ils prennent leur temps.", exEn: "They take their time." }
+                ]
+            },
+            finir: {
+                infinitive: "finir", en: "to finish", type: "regular (-ir)",
+                forms: [
+                    { pron: "Je", conj: "finis", spoken: "Je finis", example: "Je finis le travail.", exEn: "I'm finishing the work." },
+                    { pron: "Tu", conj: "finis", spoken: "Tu finis", example: "Tu finis quand ?", exEn: "When do you finish?" },
+                    { pron: "Il/Elle", conj: "finit", spoken: "Il finit", example: "Elle finit son livre.", exEn: "She's finishing her book." },
+                    { pron: "Nous", conj: "finissons", spoken: "Nous finissons", example: "Nous finissons à 5h.", exEn: "We finish at 5." },
+                    { pron: "Vous", conj: "finissez", spoken: "Vous finissez", example: "Vous finissez bientôt.", exEn: "You finish soon." },
+                    { pron: "Ils/Elles", conj: "finissent", spoken: "Ils finissent", example: "Ils finissent vite.", exEn: "They finish quickly." }
+                ]
+            }
+        };
+
         // Current flashcard index
         let currentFlashcardIndex = 0;
         let currentTopic = 'greetings';
@@ -2130,6 +2368,11 @@
                 initFlashcards();
             } else if (sectionId === 'quiz') {
                 document.getElementById('quizContainer').innerHTML = '';
+            } else if (sectionId === 'conjugation') {
+                if (!document.getElementById('conjugationContent').innerHTML.trim()) {
+                    const sel = document.getElementById('verbSelect');
+                    showConjugation(sel ? sel.value : 'etre');
+                }
             }
         }
 
@@ -2377,6 +2620,208 @@
             currentQuizQuestion++;
             displayQuizQuestion();
         }
+
+        // ═══════════════════════════════════════════════════════
+        // Conjugation viewer + practice
+        // ═══════════════════════════════════════════════════════
+        function populateVerbSelect() {
+            const sel = document.getElementById('verbSelect');
+            if (!sel || sel.dataset.populated) return;
+            sel.dataset.populated = '1';
+            const html = Object.entries(verbsData).map(([id, v]) =>
+                `<option value="${id}">${v.infinitive} — ${v.en}</option>`
+            ).join('');
+            sel.innerHTML = html;
+            sel.addEventListener('change', () => showConjugation(sel.value));
+            const practiceBtn = document.getElementById('conjPracticeBtn');
+            if (practiceBtn) practiceBtn.onclick = () => startConjPractice(sel.value);
+        }
+
+        function showConjugation(verbId) {
+            const verb = verbsData[verbId];
+            if (!verb) return;
+            const inf = escapeFr(verb.infinitive);
+            let html = `
+                <div class="conj-card">
+                    <div class="conj-header">
+                        <div class="conj-infinitive">${verb.infinitive}</div>
+                        <button class="speak-btn" onclick="speak('${inf}', this)" aria-label="Listen to ${verb.infinitive}">🔊</button>
+                        <div class="conj-english">${verb.en}</div>
+                        <div class="conj-type">${verb.type}</div>
+                    </div>
+            `;
+            verb.forms.forEach(form => {
+                const spk = escapeFr(form.spoken);
+                const ex = escapeFr(form.example);
+                html += `
+                    <div class="conj-row">
+                        <div class="conj-row-main">
+                            <div class="conj-pronoun">${form.pron}</div>
+                            <div class="conj-form" onclick="speak('${spk}')">${form.conj}</div>
+                            <button class="speak-btn" onclick="speak('${spk}', this)" aria-label="Listen to ${form.spoken}">🔊</button>
+                        </div>
+                        <div class="conj-example-row">
+                            <div class="conj-example-text">
+                                <div class="conj-example-fr">${form.example}</div>
+                                <div class="conj-example-en">${form.exEn}</div>
+                            </div>
+                            <button class="speak-btn speak-btn-small" onclick="speak('${ex}', this)" aria-label="Listen to example">🔊</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `
+                </div>
+                <div style="text-align: center; margin: 20px 0 30px;">
+                    <button class="btn btn-primary" onclick="startConjPractice('${verbId}')" style="padding: 14px 32px;">
+                        Practice ${verb.infinitive} →
+                    </button>
+                </div>
+            `;
+            document.getElementById('conjugationContent').innerHTML = html;
+        }
+
+        let conjQuiz = { questions: [], index: 0, score: 0, verbId: null };
+
+        function startConjPractice(verbId) {
+            const verb = verbsData[verbId];
+            if (!verb) return;
+            conjQuiz.verbId = verbId;
+            // Shuffle forms, then build a question per form
+            conjQuiz.questions = verb.forms.slice().sort(() => Math.random() - 0.5).map(form => {
+                const allConjs = verb.forms.map(f => f.conj);
+                const wrongs = allConjs
+                    .filter(c => c !== form.conj)
+                    .filter((c, i, a) => a.indexOf(c) === i)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3);
+                const options = [...wrongs, form.conj].sort(() => Math.random() - 0.5);
+                return {
+                    pron: form.pron,
+                    inf: verb.infinitive,
+                    spoken: form.spoken,
+                    options,
+                    correctText: form.conj
+                };
+            });
+            conjQuiz.index = 0;
+            conjQuiz.score = 0;
+            displayConjQuestion();
+            // Scroll into view so user sees the quiz right away
+            setTimeout(() => {
+                const el = document.getElementById('conjugationContent');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+        }
+
+        function displayConjQuestion() {
+            if (conjQuiz.index >= conjQuiz.questions.length) {
+                displayConjResults();
+                return;
+            }
+            const q = conjQuiz.questions[conjQuiz.index];
+            const isLast = conjQuiz.index >= conjQuiz.questions.length - 1;
+            const progress = ((conjQuiz.index + 1) / conjQuiz.questions.length) * 100;
+            let html = `
+                <div class="quiz-progress">
+                    <div class="quiz-progress-bar" style="width: ${progress}%;"></div>
+                </div>
+                <div class="question">
+                    <h3 style="text-align: center; line-height: 1.5;">
+                        Conjugate <strong style="color: #002395;">${q.inf}</strong> for <strong style="color: #E1000F;">${q.pron}</strong>
+                    </h3>
+                    <div class="options">
+            `;
+            q.options.forEach((opt, i) => {
+                html += `<button class="option-btn" style="text-align: center; font-size: 1.25em; font-weight: 600;" onclick="answerConjQuestion(${i})">${opt}</button>`;
+            });
+            html += `
+                    </div>
+                    <div id="conjFeedback" style="text-align: center; margin-top: 22px; min-height: 28px; font-weight: 700; font-size: 1.05em; color: #999;">
+                        Pick an answer above
+                    </div>
+                    <div style="text-align: center; margin-top: 12px; margin-bottom: 30px;">
+                        <button id="conjNextBtn" class="btn btn-primary" disabled onclick="advanceConjQuiz()"
+                                style="font-size: 1.1em; padding: 16px 40px; width: 100%; max-width: 320px; opacity: 0.45; cursor: not-allowed;">
+                            ${isLast ? 'See Score →' : 'Next →'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('conjugationContent').innerHTML = html;
+        }
+
+        function answerConjQuestion(selectedIndex) {
+            const q = conjQuiz.questions[conjQuiz.index];
+            const buttons = document.querySelectorAll('#conjugationContent .option-btn');
+            const correctIdx = q.options.indexOf(q.correctText);
+            buttons.forEach((btn, i) => {
+                if (i === correctIdx) btn.classList.add('correct');
+                else if (i === selectedIndex) btn.classList.add('incorrect');
+                btn.disabled = true;
+            });
+            const isCorrect = selectedIndex === correctIdx;
+            if (isCorrect) {
+                conjQuiz.score++;
+                try { if (typeof Progress !== 'undefined') Progress.addXP(10); } catch(e) {}
+            }
+            // Always play the correct conjugation so the user hears it
+            setTimeout(() => speak(q.spoken), 250);
+
+            const feedback = document.getElementById('conjFeedback');
+            if (feedback) {
+                feedback.style.color = isCorrect ? '#2e7d32' : '#c62828';
+                feedback.textContent = isCorrect
+                    ? `✓ Correct! ${q.spoken}`
+                    : `✗ Correct: ${q.pron} ${q.correctText}`;
+            }
+            const nextBtn = document.getElementById('conjNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+                nextBtn.classList.add('quiz-next-pulse');
+                setTimeout(() => {
+                    try { nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+                }, 100);
+            }
+        }
+
+        function advanceConjQuiz() {
+            conjQuiz.index++;
+            displayConjQuestion();
+        }
+
+        function displayConjResults() {
+            const total = conjQuiz.questions.length;
+            const pct = total > 0 ? Math.round((conjQuiz.score / total) * 100) : 0;
+            try {
+                if (typeof Progress !== 'undefined' && total > 0) {
+                    Progress.incrementQuizzesPassed();
+                    Progress.addXP(5);
+                }
+            } catch(e) {}
+            let message;
+            if (pct === 100) message = 'Perfect! Excellent conjugation work!';
+            else if (pct >= 80) message = 'Great work!';
+            else if (pct >= 60) message = 'Good effort — keep practicing!';
+            else message = 'Keep at it — conjugations take time.';
+            const verbId = conjQuiz.verbId;
+            const html = `
+                <div class="score-display">
+                    <h2>Practice Complete!</h2>
+                    <div class="score-value">${conjQuiz.score} / ${total}</div>
+                    <p class="score-message">${pct}% — ${message}</p>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showConjugation('${verbId}')">Review verb</button>
+                        <button class="btn btn-primary" onclick="startConjPractice('${verbId}')">Practice again</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('conjugationContent').innerHTML = html;
+        }
+
+        populateVerbSelect();
 
         function displayQuizResults() {
             const total = quizQuestions.length;

@@ -993,6 +993,15 @@
             0%, 100% { box-shadow: 0 2px 6px rgba(0, 35, 149, 0.3); }
             50% { box-shadow: 0 4px 18px rgba(225, 0, 15, 0.5); }
         }
+
+        /* Quiz Next button — pulse to draw attention */
+        .quiz-next-pulse {
+            animation: nextPulse 1.2s ease-in-out infinite;
+        }
+        @keyframes nextPulse {
+            0%, 100% { box-shadow: 0 4px 14px rgba(0, 35, 149, 0.35); transform: scale(1); }
+            50% { box-shadow: 0 6px 22px rgba(225, 0, 15, 0.55); transform: scale(1.03); }
+        }
     </style>
 </head>
 <body>
@@ -2338,13 +2347,24 @@
                 const feedbackColor = isCorrect ? '#2e7d32' : '#c62828';
                 const feedbackText = isCorrect ? '✓ Correct!' : `✗ Correct answer: ${q.options[q.correct]}`;
                 wrapper.innerHTML = `
-                    <div style="color: ${feedbackColor}; font-weight: 600; font-size: 1.05em; margin-bottom: 14px;">
+                    <div style="color: ${feedbackColor}; font-weight: 700; font-size: 1.1em; margin-bottom: 14px;">
                         ${feedbackText}
                     </div>
-                    <button class="btn btn-primary" onclick="advanceQuiz()" style="font-size: 1.05em; padding: 14px 36px;">
+                    <button class="btn btn-primary quiz-next-pulse" onclick="advanceQuiz()"
+                            style="font-size: 1.1em; padding: 16px 40px; width: 100%; max-width: 320px;">
                         ${isLast ? 'See Score →' : 'Next Question →'}
                     </button>
                 `;
+                // Make sure the user can see the Next button — auto-scroll it into view
+                setTimeout(() => {
+                    try {
+                        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } catch(e) {
+                        // Fallback for older Safari
+                        const top = wrapper.getBoundingClientRect().top + window.pageYOffset - 200;
+                        window.scrollTo({ top: top, behavior: 'smooth' });
+                    }
+                }, 100);
             }
         }
 

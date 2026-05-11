@@ -1029,6 +1029,26 @@
             margin-left: auto;
             white-space: nowrap;
         }
+        .conj-tense-bar {
+            background: #f0f4ff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            border-bottom: 1px solid #e0e8f5;
+        }
+        .conj-tense-label {
+            color: #002395;
+            font-weight: 700;
+            font-size: 1em;
+        }
+        .conj-tense-sub {
+            color: #777;
+            font-size: 0.82em;
+            font-style: italic;
+        }
+
         .conj-row {
             padding: 14px 18px;
             border-bottom: 1px solid #eee;
@@ -1618,7 +1638,13 @@
 
                 <div class="quiz-controls">
                     <select id="verbSelect" aria-label="Choose a verb"></select>
-                    <button class="btn btn-primary" id="conjPracticeBtn">Practice this verb →</button>
+                    <select id="tenseSelect" aria-label="Choose a tense">
+                        <option value="present">Présent (I am)</option>
+                        <option value="passe_compose">Passé Composé (I did)</option>
+                        <option value="imparfait">Imparfait (I was doing)</option>
+                        <option value="futur_simple">Futur Simple (I will)</option>
+                    </select>
+                    <button class="btn btn-primary" id="conjPracticeBtn">Practice →</button>
                 </div>
 
                 <div id="conjugationContent" style="margin-top: 8px;"></div>
@@ -2204,139 +2230,648 @@
             ]
         };
 
-        // Verb conjugation data (present tense)
+        // Tense metadata
+        const TENSES = {
+            present:       { label: "Présent",        sub: "I am / I do" },
+            passe_compose: { label: "Passé Composé",  sub: "I did / I have done" },
+            imparfait:     { label: "Imparfait",      sub: "I was doing / used to" },
+            futur_simple:  { label: "Futur Simple",   sub: "I will do" }
+        };
+        const TENSE_ORDER = ['present', 'passe_compose', 'imparfait', 'futur_simple'];
+
+        // Helper to build a tense block of 6 forms.
+        // Each input is a 6-array of [pron, conj, spoken] arrays.
+        // Optional 4th element is [example_fr, example_en] (only used on present).
+        function _t(rows) {
+            return rows.map(r => {
+                const o = { pron: r[0], conj: r[1], spoken: r[2] };
+                if (r[3]) { o.example = r[3][0]; o.exEn = r[3][1]; }
+                return o;
+            });
+        }
+        // Standard subject pronouns, in order
+        const PR = ["Je", "Tu", "Il/Elle", "Nous", "Vous", "Ils/Elles"];
+
+        // ═══════════════════════════════════════════════════════
+        // Verb conjugation data — 24 verbs, 4 tenses each
+        // For each tense: 6 forms (Je / Tu / Il-Elle / Nous / Vous / Ils-Elles)
+        // Present has example sentences per form; other tenses have just
+        // conjugation + spoken phrase for quick recognition.
+        // Reflexive verbs (se laver, se lever, etc.) put the reflexive
+        // pronoun inside the 'conj' field — "me lave", "te laves", etc.
+        // ═══════════════════════════════════════════════════════
         const verbsData = {
             etre: {
                 infinitive: "être", en: "to be", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "suis", spoken: "Je suis", example: "Je suis content.", exEn: "I am happy." },
-                    { pron: "Tu", conj: "es", spoken: "Tu es", example: "Tu es intelligent.", exEn: "You are smart." },
-                    { pron: "Il/Elle", conj: "est", spoken: "Il est", example: "Elle est ici.", exEn: "She is here." },
-                    { pron: "Nous", conj: "sommes", spoken: "Nous sommes", example: "Nous sommes amis.", exEn: "We are friends." },
-                    { pron: "Vous", conj: "êtes", spoken: "Vous êtes", example: "Vous êtes prêts ?", exEn: "Are you ready?" },
-                    { pron: "Ils/Elles", conj: "sont", spoken: "Ils sont", example: "Ils sont heureux.", exEn: "They are happy." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "suis", "Je suis", ["Je suis content.", "I am happy."]],
+                        [PR[1], "es", "Tu es", ["Tu es intelligent.", "You are smart."]],
+                        [PR[2], "est", "Il est", ["Elle est ici.", "She is here."]],
+                        [PR[3], "sommes", "Nous sommes", ["Nous sommes amis.", "We are friends."]],
+                        [PR[4], "êtes", "Vous êtes", ["Vous êtes prêts ?", "Are you ready?"]],
+                        [PR[5], "sont", "Ils sont", ["Ils sont heureux.", "They are happy."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai été", "J'ai été"],
+                        [PR[1], "as été", "Tu as été"],
+                        [PR[2], "a été", "Il a été"],
+                        [PR[3], "avons été", "Nous avons été"],
+                        [PR[4], "avez été", "Vous avez été"],
+                        [PR[5], "ont été", "Ils ont été"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "étais", "J'étais"],
+                        [PR[1], "étais", "Tu étais"],
+                        [PR[2], "était", "Il était"],
+                        [PR[3], "étions", "Nous étions"],
+                        [PR[4], "étiez", "Vous étiez"],
+                        [PR[5], "étaient", "Ils étaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "serai", "Je serai"],
+                        [PR[1], "seras", "Tu seras"],
+                        [PR[2], "sera", "Il sera"],
+                        [PR[3], "serons", "Nous serons"],
+                        [PR[4], "serez", "Vous serez"],
+                        [PR[5], "seront", "Ils seront"]
+                    ])
+                }
             },
             avoir: {
                 infinitive: "avoir", en: "to have", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "ai", spoken: "J'ai", example: "J'ai un chat.", exEn: "I have a cat." },
-                    { pron: "Tu", conj: "as", spoken: "Tu as", example: "Tu as une voiture.", exEn: "You have a car." },
-                    { pron: "Il/Elle", conj: "a", spoken: "Il a", example: "Elle a un livre.", exEn: "She has a book." },
-                    { pron: "Nous", conj: "avons", spoken: "Nous avons", example: "Nous avons une maison.", exEn: "We have a house." },
-                    { pron: "Vous", conj: "avez", spoken: "Vous avez", example: "Vous avez des enfants.", exEn: "You have children." },
-                    { pron: "Ils/Elles", conj: "ont", spoken: "Ils ont", example: "Ils ont un chien.", exEn: "They have a dog." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "ai", "J'ai", ["J'ai un chat.", "I have a cat."]],
+                        [PR[1], "as", "Tu as", ["Tu as une voiture.", "You have a car."]],
+                        [PR[2], "a", "Il a", ["Elle a un livre.", "She has a book."]],
+                        [PR[3], "avons", "Nous avons", ["Nous avons une maison.", "We have a house."]],
+                        [PR[4], "avez", "Vous avez", ["Vous avez des enfants.", "You have children."]],
+                        [PR[5], "ont", "Ils ont", ["Ils ont un chien.", "They have a dog."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai eu", "J'ai eu"], [PR[1], "as eu", "Tu as eu"], [PR[2], "a eu", "Il a eu"],
+                        [PR[3], "avons eu", "Nous avons eu"], [PR[4], "avez eu", "Vous avez eu"], [PR[5], "ont eu", "Ils ont eu"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "avais", "J'avais"], [PR[1], "avais", "Tu avais"], [PR[2], "avait", "Il avait"],
+                        [PR[3], "avions", "Nous avions"], [PR[4], "aviez", "Vous aviez"], [PR[5], "avaient", "Ils avaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "aurai", "J'aurai"], [PR[1], "auras", "Tu auras"], [PR[2], "aura", "Il aura"],
+                        [PR[3], "aurons", "Nous aurons"], [PR[4], "aurez", "Vous aurez"], [PR[5], "auront", "Ils auront"]
+                    ])
+                }
             },
             aller: {
                 infinitive: "aller", en: "to go", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "vais", spoken: "Je vais", example: "Je vais à l'école.", exEn: "I'm going to school." },
-                    { pron: "Tu", conj: "vas", spoken: "Tu vas", example: "Tu vas au cinéma.", exEn: "You're going to the cinema." },
-                    { pron: "Il/Elle", conj: "va", spoken: "Il va", example: "Elle va au marché.", exEn: "She's going to the market." },
-                    { pron: "Nous", conj: "allons", spoken: "Nous allons", example: "Nous allons en France.", exEn: "We're going to France." },
-                    { pron: "Vous", conj: "allez", spoken: "Vous allez", example: "Vous allez bien ?", exEn: "Are you doing well?" },
-                    { pron: "Ils/Elles", conj: "vont", spoken: "Ils vont", example: "Ils vont à la plage.", exEn: "They're going to the beach." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "vais", "Je vais", ["Je vais à l'école.", "I'm going to school."]],
+                        [PR[1], "vas", "Tu vas", ["Tu vas au cinéma.", "You're going to the cinema."]],
+                        [PR[2], "va", "Il va", ["Elle va au marché.", "She's going to the market."]],
+                        [PR[3], "allons", "Nous allons", ["Nous allons en France.", "We're going to France."]],
+                        [PR[4], "allez", "Vous allez", ["Vous allez bien ?", "Are you doing well?"]],
+                        [PR[5], "vont", "Ils vont", ["Ils vont à la plage.", "They're going to the beach."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "suis allé(e)", "Je suis allé"], [PR[1], "es allé(e)", "Tu es allé"], [PR[2], "est allé(e)", "Il est allé"],
+                        [PR[3], "sommes allé(e)s", "Nous sommes allés"], [PR[4], "êtes allé(e)s", "Vous êtes allés"], [PR[5], "sont allé(e)s", "Ils sont allés"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "allais", "J'allais"], [PR[1], "allais", "Tu allais"], [PR[2], "allait", "Il allait"],
+                        [PR[3], "allions", "Nous allions"], [PR[4], "alliez", "Vous alliez"], [PR[5], "allaient", "Ils allaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "irai", "J'irai"], [PR[1], "iras", "Tu iras"], [PR[2], "ira", "Il ira"],
+                        [PR[3], "irons", "Nous irons"], [PR[4], "irez", "Vous irez"], [PR[5], "iront", "Ils iront"]
+                    ])
+                }
             },
             faire: {
                 infinitive: "faire", en: "to do / to make", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "fais", spoken: "Je fais", example: "Je fais mes devoirs.", exEn: "I'm doing my homework." },
-                    { pron: "Tu", conj: "fais", spoken: "Tu fais", example: "Tu fais du sport.", exEn: "You do sports." },
-                    { pron: "Il/Elle", conj: "fait", spoken: "Il fait", example: "Il fait beau.", exEn: "The weather is nice." },
-                    { pron: "Nous", conj: "faisons", spoken: "Nous faisons", example: "Nous faisons un gâteau.", exEn: "We're making a cake." },
-                    { pron: "Vous", conj: "faites", spoken: "Vous faites", example: "Vous faites quoi ?", exEn: "What are you doing?" },
-                    { pron: "Ils/Elles", conj: "font", spoken: "Ils font", example: "Ils font la cuisine.", exEn: "They're cooking." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "fais", "Je fais", ["Je fais mes devoirs.", "I'm doing my homework."]],
+                        [PR[1], "fais", "Tu fais", ["Tu fais du sport.", "You do sports."]],
+                        [PR[2], "fait", "Il fait", ["Il fait beau.", "The weather is nice."]],
+                        [PR[3], "faisons", "Nous faisons", ["Nous faisons un gâteau.", "We're making a cake."]],
+                        [PR[4], "faites", "Vous faites", ["Vous faites quoi ?", "What are you doing?"]],
+                        [PR[5], "font", "Ils font", ["Ils font la cuisine.", "They're cooking."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai fait", "J'ai fait"], [PR[1], "as fait", "Tu as fait"], [PR[2], "a fait", "Il a fait"],
+                        [PR[3], "avons fait", "Nous avons fait"], [PR[4], "avez fait", "Vous avez fait"], [PR[5], "ont fait", "Ils ont fait"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "faisais", "Je faisais"], [PR[1], "faisais", "Tu faisais"], [PR[2], "faisait", "Il faisait"],
+                        [PR[3], "faisions", "Nous faisions"], [PR[4], "faisiez", "Vous faisiez"], [PR[5], "faisaient", "Ils faisaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "ferai", "Je ferai"], [PR[1], "feras", "Tu feras"], [PR[2], "fera", "Il fera"],
+                        [PR[3], "ferons", "Nous ferons"], [PR[4], "ferez", "Vous ferez"], [PR[5], "feront", "Ils feront"]
+                    ])
+                }
             },
-            parler: {
-                infinitive: "parler", en: "to speak", type: "regular (-er)",
-                forms: [
-                    { pron: "Je", conj: "parle", spoken: "Je parle", example: "Je parle français.", exEn: "I speak French." },
-                    { pron: "Tu", conj: "parles", spoken: "Tu parles", example: "Tu parles anglais.", exEn: "You speak English." },
-                    { pron: "Il/Elle", conj: "parle", spoken: "Il parle", example: "Elle parle lentement.", exEn: "She speaks slowly." },
-                    { pron: "Nous", conj: "parlons", spoken: "Nous parlons", example: "Nous parlons ensemble.", exEn: "We speak together." },
-                    { pron: "Vous", conj: "parlez", spoken: "Vous parlez", example: "Vous parlez bien.", exEn: "You speak well." },
-                    { pron: "Ils/Elles", conj: "parlent", spoken: "Ils parlent", example: "Ils parlent espagnol.", exEn: "They speak Spanish." }
-                ]
-            },
-            aimer: {
-                infinitive: "aimer", en: "to love / to like", type: "regular (-er)",
-                forms: [
-                    { pron: "Je", conj: "aime", spoken: "J'aime", example: "J'aime le chocolat.", exEn: "I love chocolate." },
-                    { pron: "Tu", conj: "aimes", spoken: "Tu aimes", example: "Tu aimes danser.", exEn: "You like to dance." },
-                    { pron: "Il/Elle", conj: "aime", spoken: "Il aime", example: "Elle aime lire.", exEn: "She likes to read." },
-                    { pron: "Nous", conj: "aimons", spoken: "Nous aimons", example: "Nous aimons Paris.", exEn: "We love Paris." },
-                    { pron: "Vous", conj: "aimez", spoken: "Vous aimez", example: "Vous aimez la musique ?", exEn: "Do you like music?" },
-                    { pron: "Ils/Elles", conj: "aiment", spoken: "Ils aiment", example: "Ils aiment voyager.", exEn: "They like to travel." }
-                ]
-            },
-            manger: {
-                infinitive: "manger", en: "to eat", type: "regular (-er)",
-                forms: [
-                    { pron: "Je", conj: "mange", spoken: "Je mange", example: "Je mange une pomme.", exEn: "I'm eating an apple." },
-                    { pron: "Tu", conj: "manges", spoken: "Tu manges", example: "Tu manges vite.", exEn: "You eat fast." },
-                    { pron: "Il/Elle", conj: "mange", spoken: "Il mange", example: "Il mange au restaurant.", exEn: "He's eating at the restaurant." },
-                    { pron: "Nous", conj: "mangeons", spoken: "Nous mangeons", example: "Nous mangeons ensemble.", exEn: "We eat together." },
-                    { pron: "Vous", conj: "mangez", spoken: "Vous mangez", example: "Vous mangez bien.", exEn: "You eat well." },
-                    { pron: "Ils/Elles", conj: "mangent", spoken: "Ils mangent", example: "Ils mangent du pain.", exEn: "They eat bread." }
-                ]
-            },
-            habiter: {
-                infinitive: "habiter", en: "to live (somewhere)", type: "regular (-er)",
-                forms: [
-                    { pron: "Je", conj: "habite", spoken: "J'habite", example: "J'habite à Paris.", exEn: "I live in Paris." },
-                    { pron: "Tu", conj: "habites", spoken: "Tu habites", example: "Tu habites où ?", exEn: "Where do you live?" },
-                    { pron: "Il/Elle", conj: "habite", spoken: "Il habite", example: "Elle habite en France.", exEn: "She lives in France." },
-                    { pron: "Nous", conj: "habitons", spoken: "Nous habitons", example: "Nous habitons ici.", exEn: "We live here." },
-                    { pron: "Vous", conj: "habitez", spoken: "Vous habitez", example: "Vous habitez en ville ?", exEn: "Do you live in the city?" },
-                    { pron: "Ils/Elles", conj: "habitent", spoken: "Ils habitent", example: "Ils habitent près d'ici.", exEn: "They live nearby." }
-                ]
-            },
-            vouloir: {
-                infinitive: "vouloir", en: "to want", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "veux", spoken: "Je veux", example: "Je veux un café.", exEn: "I want a coffee." },
-                    { pron: "Tu", conj: "veux", spoken: "Tu veux", example: "Tu veux manger ?", exEn: "Do you want to eat?" },
-                    { pron: "Il/Elle", conj: "veut", spoken: "Il veut", example: "Elle veut partir.", exEn: "She wants to leave." },
-                    { pron: "Nous", conj: "voulons", spoken: "Nous voulons", example: "Nous voulons du pain.", exEn: "We want some bread." },
-                    { pron: "Vous", conj: "voulez", spoken: "Vous voulez", example: "Vous voulez quoi ?", exEn: "What do you want?" },
-                    { pron: "Ils/Elles", conj: "veulent", spoken: "Ils veulent", example: "Ils veulent dormir.", exEn: "They want to sleep." }
-                ]
+            dire: {
+                infinitive: "dire", en: "to say / to tell", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "dis", "Je dis", ["Je dis la vérité.", "I'm telling the truth."]],
+                        [PR[1], "dis", "Tu dis", ["Tu dis quoi ?", "What are you saying?"]],
+                        [PR[2], "dit", "Il dit", ["Elle dit bonjour.", "She says hello."]],
+                        [PR[3], "disons", "Nous disons", ["Nous disons toujours merci.", "We always say thanks."]],
+                        [PR[4], "dites", "Vous dites", ["Vous dites quoi ?", "What are you saying?"]],
+                        [PR[5], "disent", "Ils disent", ["Ils disent non.", "They say no."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai dit", "J'ai dit"], [PR[1], "as dit", "Tu as dit"], [PR[2], "a dit", "Il a dit"],
+                        [PR[3], "avons dit", "Nous avons dit"], [PR[4], "avez dit", "Vous avez dit"], [PR[5], "ont dit", "Ils ont dit"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "disais", "Je disais"], [PR[1], "disais", "Tu disais"], [PR[2], "disait", "Il disait"],
+                        [PR[3], "disions", "Nous disions"], [PR[4], "disiez", "Vous disiez"], [PR[5], "disaient", "Ils disaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "dirai", "Je dirai"], [PR[1], "diras", "Tu diras"], [PR[2], "dira", "Il dira"],
+                        [PR[3], "dirons", "Nous dirons"], [PR[4], "direz", "Vous direz"], [PR[5], "diront", "Ils diront"]
+                    ])
+                }
             },
             pouvoir: {
                 infinitive: "pouvoir", en: "to be able / can", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "peux", spoken: "Je peux", example: "Je peux t'aider.", exEn: "I can help you." },
-                    { pron: "Tu", conj: "peux", spoken: "Tu peux", example: "Tu peux venir ?", exEn: "Can you come?" },
-                    { pron: "Il/Elle", conj: "peut", spoken: "Il peut", example: "Elle peut nager.", exEn: "She can swim." },
-                    { pron: "Nous", conj: "pouvons", spoken: "Nous pouvons", example: "Nous pouvons partir.", exEn: "We can leave." },
-                    { pron: "Vous", conj: "pouvez", spoken: "Vous pouvez", example: "Vous pouvez entrer.", exEn: "You can come in." },
-                    { pron: "Ils/Elles", conj: "peuvent", spoken: "Ils peuvent", example: "Ils peuvent attendre.", exEn: "They can wait." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "peux", "Je peux", ["Je peux t'aider.", "I can help you."]],
+                        [PR[1], "peux", "Tu peux", ["Tu peux venir ?", "Can you come?"]],
+                        [PR[2], "peut", "Il peut", ["Elle peut nager.", "She can swim."]],
+                        [PR[3], "pouvons", "Nous pouvons", ["Nous pouvons partir.", "We can leave."]],
+                        [PR[4], "pouvez", "Vous pouvez", ["Vous pouvez entrer.", "You can come in."]],
+                        [PR[5], "peuvent", "Ils peuvent", ["Ils peuvent attendre.", "They can wait."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai pu", "J'ai pu"], [PR[1], "as pu", "Tu as pu"], [PR[2], "a pu", "Il a pu"],
+                        [PR[3], "avons pu", "Nous avons pu"], [PR[4], "avez pu", "Vous avez pu"], [PR[5], "ont pu", "Ils ont pu"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "pouvais", "Je pouvais"], [PR[1], "pouvais", "Tu pouvais"], [PR[2], "pouvait", "Il pouvait"],
+                        [PR[3], "pouvions", "Nous pouvions"], [PR[4], "pouviez", "Vous pouviez"], [PR[5], "pouvaient", "Ils pouvaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "pourrai", "Je pourrai"], [PR[1], "pourras", "Tu pourras"], [PR[2], "pourra", "Il pourra"],
+                        [PR[3], "pourrons", "Nous pourrons"], [PR[4], "pourrez", "Vous pourrez"], [PR[5], "pourront", "Ils pourront"]
+                    ])
+                }
+            },
+            vouloir: {
+                infinitive: "vouloir", en: "to want", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "veux", "Je veux", ["Je veux un café.", "I want a coffee."]],
+                        [PR[1], "veux", "Tu veux", ["Tu veux manger ?", "Do you want to eat?"]],
+                        [PR[2], "veut", "Il veut", ["Elle veut partir.", "She wants to leave."]],
+                        [PR[3], "voulons", "Nous voulons", ["Nous voulons du pain.", "We want some bread."]],
+                        [PR[4], "voulez", "Vous voulez", ["Vous voulez quoi ?", "What do you want?"]],
+                        [PR[5], "veulent", "Ils veulent", ["Ils veulent dormir.", "They want to sleep."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai voulu", "J'ai voulu"], [PR[1], "as voulu", "Tu as voulu"], [PR[2], "a voulu", "Il a voulu"],
+                        [PR[3], "avons voulu", "Nous avons voulu"], [PR[4], "avez voulu", "Vous avez voulu"], [PR[5], "ont voulu", "Ils ont voulu"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "voulais", "Je voulais"], [PR[1], "voulais", "Tu voulais"], [PR[2], "voulait", "Il voulait"],
+                        [PR[3], "voulions", "Nous voulions"], [PR[4], "vouliez", "Vous vouliez"], [PR[5], "voulaient", "Ils voulaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "voudrai", "Je voudrai"], [PR[1], "voudras", "Tu voudras"], [PR[2], "voudra", "Il voudra"],
+                        [PR[3], "voudrons", "Nous voudrons"], [PR[4], "voudrez", "Vous voudrez"], [PR[5], "voudront", "Ils voudront"]
+                    ])
+                }
+            },
+            savoir: {
+                infinitive: "savoir", en: "to know (facts)", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "sais", "Je sais", ["Je sais nager.", "I know how to swim."]],
+                        [PR[1], "sais", "Tu sais", ["Tu sais où ?", "Do you know where?"]],
+                        [PR[2], "sait", "Il sait", ["Elle sait la réponse.", "She knows the answer."]],
+                        [PR[3], "savons", "Nous savons", ["Nous savons tout.", "We know everything."]],
+                        [PR[4], "savez", "Vous savez", ["Vous savez quoi ?", "You know what?"]],
+                        [PR[5], "savent", "Ils savent", ["Ils savent bien.", "They know well."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai su", "J'ai su"], [PR[1], "as su", "Tu as su"], [PR[2], "a su", "Il a su"],
+                        [PR[3], "avons su", "Nous avons su"], [PR[4], "avez su", "Vous avez su"], [PR[5], "ont su", "Ils ont su"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "savais", "Je savais"], [PR[1], "savais", "Tu savais"], [PR[2], "savait", "Il savait"],
+                        [PR[3], "savions", "Nous savions"], [PR[4], "saviez", "Vous saviez"], [PR[5], "savaient", "Ils savaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "saurai", "Je saurai"], [PR[1], "sauras", "Tu sauras"], [PR[2], "saura", "Il saura"],
+                        [PR[3], "saurons", "Nous saurons"], [PR[4], "saurez", "Vous saurez"], [PR[5], "sauront", "Ils sauront"]
+                    ])
+                }
+            },
+            voir: {
+                infinitive: "voir", en: "to see", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "vois", "Je vois", ["Je vois la mer.", "I see the sea."]],
+                        [PR[1], "vois", "Tu vois", ["Tu vois ce film ?", "Do you see this film?"]],
+                        [PR[2], "voit", "Il voit", ["Elle voit son ami.", "She sees her friend."]],
+                        [PR[3], "voyons", "Nous voyons", ["Nous voyons les étoiles.", "We see the stars."]],
+                        [PR[4], "voyez", "Vous voyez", ["Vous voyez la tour ?", "Do you see the tower?"]],
+                        [PR[5], "voient", "Ils voient", ["Ils voient bien.", "They see well."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai vu", "J'ai vu"], [PR[1], "as vu", "Tu as vu"], [PR[2], "a vu", "Il a vu"],
+                        [PR[3], "avons vu", "Nous avons vu"], [PR[4], "avez vu", "Vous avez vu"], [PR[5], "ont vu", "Ils ont vu"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "voyais", "Je voyais"], [PR[1], "voyais", "Tu voyais"], [PR[2], "voyait", "Il voyait"],
+                        [PR[3], "voyions", "Nous voyions"], [PR[4], "voyiez", "Vous voyiez"], [PR[5], "voyaient", "Ils voyaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "verrai", "Je verrai"], [PR[1], "verras", "Tu verras"], [PR[2], "verra", "Il verra"],
+                        [PR[3], "verrons", "Nous verrons"], [PR[4], "verrez", "Vous verrez"], [PR[5], "verront", "Ils verront"]
+                    ])
+                }
+            },
+            venir: {
+                infinitive: "venir", en: "to come", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "viens", "Je viens", ["Je viens de Paris.", "I come from Paris."]],
+                        [PR[1], "viens", "Tu viens", ["Tu viens avec moi ?", "Are you coming with me?"]],
+                        [PR[2], "vient", "Il vient", ["Elle vient demain.", "She's coming tomorrow."]],
+                        [PR[3], "venons", "Nous venons", ["Nous venons ensemble.", "We're coming together."]],
+                        [PR[4], "venez", "Vous venez", ["Vous venez d'où ?", "Where are you from?"]],
+                        [PR[5], "viennent", "Ils viennent", ["Ils viennent en retard.", "They come late."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "suis venu(e)", "Je suis venu"], [PR[1], "es venu(e)", "Tu es venu"], [PR[2], "est venu(e)", "Il est venu"],
+                        [PR[3], "sommes venu(e)s", "Nous sommes venus"], [PR[4], "êtes venu(e)s", "Vous êtes venus"], [PR[5], "sont venu(e)s", "Ils sont venus"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "venais", "Je venais"], [PR[1], "venais", "Tu venais"], [PR[2], "venait", "Il venait"],
+                        [PR[3], "venions", "Nous venions"], [PR[4], "veniez", "Vous veniez"], [PR[5], "venaient", "Ils venaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "viendrai", "Je viendrai"], [PR[1], "viendras", "Tu viendras"], [PR[2], "viendra", "Il viendra"],
+                        [PR[3], "viendrons", "Nous viendrons"], [PR[4], "viendrez", "Vous viendrez"], [PR[5], "viendront", "Ils viendront"]
+                    ])
+                }
             },
             prendre: {
                 infinitive: "prendre", en: "to take", type: "irregular",
-                forms: [
-                    { pron: "Je", conj: "prends", spoken: "Je prends", example: "Je prends le bus.", exEn: "I take the bus." },
-                    { pron: "Tu", conj: "prends", spoken: "Tu prends", example: "Tu prends un café ?", exEn: "Are you having a coffee?" },
-                    { pron: "Il/Elle", conj: "prend", spoken: "Il prend", example: "Elle prend une photo.", exEn: "She's taking a photo." },
-                    { pron: "Nous", conj: "prenons", spoken: "Nous prenons", example: "Nous prenons le train.", exEn: "We take the train." },
-                    { pron: "Vous", conj: "prenez", spoken: "Vous prenez", example: "Vous prenez quoi ?", exEn: "What will you have?" },
-                    { pron: "Ils/Elles", conj: "prennent", spoken: "Ils prennent", example: "Ils prennent leur temps.", exEn: "They take their time." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "prends", "Je prends", ["Je prends le bus.", "I take the bus."]],
+                        [PR[1], "prends", "Tu prends", ["Tu prends un café ?", "Are you having a coffee?"]],
+                        [PR[2], "prend", "Il prend", ["Elle prend une photo.", "She's taking a photo."]],
+                        [PR[3], "prenons", "Nous prenons", ["Nous prenons le train.", "We take the train."]],
+                        [PR[4], "prenez", "Vous prenez", ["Vous prenez quoi ?", "What will you have?"]],
+                        [PR[5], "prennent", "Ils prennent", ["Ils prennent leur temps.", "They take their time."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai pris", "J'ai pris"], [PR[1], "as pris", "Tu as pris"], [PR[2], "a pris", "Il a pris"],
+                        [PR[3], "avons pris", "Nous avons pris"], [PR[4], "avez pris", "Vous avez pris"], [PR[5], "ont pris", "Ils ont pris"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "prenais", "Je prenais"], [PR[1], "prenais", "Tu prenais"], [PR[2], "prenait", "Il prenait"],
+                        [PR[3], "prenions", "Nous prenions"], [PR[4], "preniez", "Vous preniez"], [PR[5], "prenaient", "Ils prenaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "prendrai", "Je prendrai"], [PR[1], "prendras", "Tu prendras"], [PR[2], "prendra", "Il prendra"],
+                        [PR[3], "prendrons", "Nous prendrons"], [PR[4], "prendrez", "Vous prendrez"], [PR[5], "prendront", "Ils prendront"]
+                    ])
+                }
+            },
+            mettre: {
+                infinitive: "mettre", en: "to put / to place", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "mets", "Je mets", ["Je mets la table.", "I'm setting the table."]],
+                        [PR[1], "mets", "Tu mets", ["Tu mets ta veste.", "You put on your jacket."]],
+                        [PR[2], "met", "Il met", ["Elle met du sucre.", "She adds sugar."]],
+                        [PR[3], "mettons", "Nous mettons", ["Nous mettons le livre ici.", "We put the book here."]],
+                        [PR[4], "mettez", "Vous mettez", ["Vous mettez vos chaussures.", "You put on your shoes."]],
+                        [PR[5], "mettent", "Ils mettent", ["Ils mettent leur manteau.", "They put on their coats."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai mis", "J'ai mis"], [PR[1], "as mis", "Tu as mis"], [PR[2], "a mis", "Il a mis"],
+                        [PR[3], "avons mis", "Nous avons mis"], [PR[4], "avez mis", "Vous avez mis"], [PR[5], "ont mis", "Ils ont mis"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "mettais", "Je mettais"], [PR[1], "mettais", "Tu mettais"], [PR[2], "mettait", "Il mettait"],
+                        [PR[3], "mettions", "Nous mettions"], [PR[4], "mettiez", "Vous mettiez"], [PR[5], "mettaient", "Ils mettaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "mettrai", "Je mettrai"], [PR[1], "mettras", "Tu mettras"], [PR[2], "mettra", "Il mettra"],
+                        [PR[3], "mettrons", "Nous mettrons"], [PR[4], "mettrez", "Vous mettrez"], [PR[5], "mettront", "Ils mettront"]
+                    ])
+                }
+            },
+            parler: {
+                infinitive: "parler", en: "to speak", type: "regular (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "parle", "Je parle", ["Je parle français.", "I speak French."]],
+                        [PR[1], "parles", "Tu parles", ["Tu parles anglais.", "You speak English."]],
+                        [PR[2], "parle", "Il parle", ["Elle parle lentement.", "She speaks slowly."]],
+                        [PR[3], "parlons", "Nous parlons", ["Nous parlons ensemble.", "We speak together."]],
+                        [PR[4], "parlez", "Vous parlez", ["Vous parlez bien.", "You speak well."]],
+                        [PR[5], "parlent", "Ils parlent", ["Ils parlent espagnol.", "They speak Spanish."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai parlé", "J'ai parlé"], [PR[1], "as parlé", "Tu as parlé"], [PR[2], "a parlé", "Il a parlé"],
+                        [PR[3], "avons parlé", "Nous avons parlé"], [PR[4], "avez parlé", "Vous avez parlé"], [PR[5], "ont parlé", "Ils ont parlé"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "parlais", "Je parlais"], [PR[1], "parlais", "Tu parlais"], [PR[2], "parlait", "Il parlait"],
+                        [PR[3], "parlions", "Nous parlions"], [PR[4], "parliez", "Vous parliez"], [PR[5], "parlaient", "Ils parlaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "parlerai", "Je parlerai"], [PR[1], "parleras", "Tu parleras"], [PR[2], "parlera", "Il parlera"],
+                        [PR[3], "parlerons", "Nous parlerons"], [PR[4], "parlerez", "Vous parlerez"], [PR[5], "parleront", "Ils parleront"]
+                    ])
+                }
+            },
+            aimer: {
+                infinitive: "aimer", en: "to love / to like", type: "regular (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "aime", "J'aime", ["J'aime le chocolat.", "I love chocolate."]],
+                        [PR[1], "aimes", "Tu aimes", ["Tu aimes danser.", "You like to dance."]],
+                        [PR[2], "aime", "Il aime", ["Elle aime lire.", "She likes to read."]],
+                        [PR[3], "aimons", "Nous aimons", ["Nous aimons Paris.", "We love Paris."]],
+                        [PR[4], "aimez", "Vous aimez", ["Vous aimez la musique ?", "Do you like music?"]],
+                        [PR[5], "aiment", "Ils aiment", ["Ils aiment voyager.", "They like to travel."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai aimé", "J'ai aimé"], [PR[1], "as aimé", "Tu as aimé"], [PR[2], "a aimé", "Il a aimé"],
+                        [PR[3], "avons aimé", "Nous avons aimé"], [PR[4], "avez aimé", "Vous avez aimé"], [PR[5], "ont aimé", "Ils ont aimé"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "aimais", "J'aimais"], [PR[1], "aimais", "Tu aimais"], [PR[2], "aimait", "Il aimait"],
+                        [PR[3], "aimions", "Nous aimions"], [PR[4], "aimiez", "Vous aimiez"], [PR[5], "aimaient", "Ils aimaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "aimerai", "J'aimerai"], [PR[1], "aimeras", "Tu aimeras"], [PR[2], "aimera", "Il aimera"],
+                        [PR[3], "aimerons", "Nous aimerons"], [PR[4], "aimerez", "Vous aimerez"], [PR[5], "aimeront", "Ils aimeront"]
+                    ])
+                }
+            },
+            manger: {
+                infinitive: "manger", en: "to eat", type: "regular (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "mange", "Je mange", ["Je mange une pomme.", "I'm eating an apple."]],
+                        [PR[1], "manges", "Tu manges", ["Tu manges vite.", "You eat fast."]],
+                        [PR[2], "mange", "Il mange", ["Il mange au restaurant.", "He's eating at the restaurant."]],
+                        [PR[3], "mangeons", "Nous mangeons", ["Nous mangeons ensemble.", "We eat together."]],
+                        [PR[4], "mangez", "Vous mangez", ["Vous mangez bien.", "You eat well."]],
+                        [PR[5], "mangent", "Ils mangent", ["Ils mangent du pain.", "They eat bread."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai mangé", "J'ai mangé"], [PR[1], "as mangé", "Tu as mangé"], [PR[2], "a mangé", "Il a mangé"],
+                        [PR[3], "avons mangé", "Nous avons mangé"], [PR[4], "avez mangé", "Vous avez mangé"], [PR[5], "ont mangé", "Ils ont mangé"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "mangeais", "Je mangeais"], [PR[1], "mangeais", "Tu mangeais"], [PR[2], "mangeait", "Il mangeait"],
+                        [PR[3], "mangions", "Nous mangions"], [PR[4], "mangiez", "Vous mangiez"], [PR[5], "mangeaient", "Ils mangeaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "mangerai", "Je mangerai"], [PR[1], "mangeras", "Tu mangeras"], [PR[2], "mangera", "Il mangera"],
+                        [PR[3], "mangerons", "Nous mangerons"], [PR[4], "mangerez", "Vous mangerez"], [PR[5], "mangeront", "Ils mangeront"]
+                    ])
+                }
+            },
+            boire: {
+                infinitive: "boire", en: "to drink", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "bois", "Je bois", ["Je bois de l'eau.", "I'm drinking water."]],
+                        [PR[1], "bois", "Tu bois", ["Tu bois du café ?", "Do you drink coffee?"]],
+                        [PR[2], "boit", "Il boit", ["Elle boit du thé.", "She drinks tea."]],
+                        [PR[3], "buvons", "Nous buvons", ["Nous buvons du vin.", "We drink wine."]],
+                        [PR[4], "buvez", "Vous buvez", ["Vous buvez quoi ?", "What are you drinking?"]],
+                        [PR[5], "boivent", "Ils boivent", ["Ils boivent du jus.", "They drink juice."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai bu", "J'ai bu"], [PR[1], "as bu", "Tu as bu"], [PR[2], "a bu", "Il a bu"],
+                        [PR[3], "avons bu", "Nous avons bu"], [PR[4], "avez bu", "Vous avez bu"], [PR[5], "ont bu", "Ils ont bu"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "buvais", "Je buvais"], [PR[1], "buvais", "Tu buvais"], [PR[2], "buvait", "Il buvait"],
+                        [PR[3], "buvions", "Nous buvions"], [PR[4], "buviez", "Vous buviez"], [PR[5], "buvaient", "Ils buvaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "boirai", "Je boirai"], [PR[1], "boiras", "Tu boiras"], [PR[2], "boira", "Il boira"],
+                        [PR[3], "boirons", "Nous boirons"], [PR[4], "boirez", "Vous boirez"], [PR[5], "boiront", "Ils boiront"]
+                    ])
+                }
+            },
+            habiter: {
+                infinitive: "habiter", en: "to live (somewhere)", type: "regular (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "habite", "J'habite", ["J'habite à Paris.", "I live in Paris."]],
+                        [PR[1], "habites", "Tu habites", ["Tu habites où ?", "Where do you live?"]],
+                        [PR[2], "habite", "Il habite", ["Elle habite en France.", "She lives in France."]],
+                        [PR[3], "habitons", "Nous habitons", ["Nous habitons ici.", "We live here."]],
+                        [PR[4], "habitez", "Vous habitez", ["Vous habitez en ville ?", "Do you live in the city?"]],
+                        [PR[5], "habitent", "Ils habitent", ["Ils habitent près d'ici.", "They live nearby."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai habité", "J'ai habité"], [PR[1], "as habité", "Tu as habité"], [PR[2], "a habité", "Il a habité"],
+                        [PR[3], "avons habité", "Nous avons habité"], [PR[4], "avez habité", "Vous avez habité"], [PR[5], "ont habité", "Ils ont habité"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "habitais", "J'habitais"], [PR[1], "habitais", "Tu habitais"], [PR[2], "habitait", "Il habitait"],
+                        [PR[3], "habitions", "Nous habitions"], [PR[4], "habitiez", "Vous habitiez"], [PR[5], "habitaient", "Ils habitaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "habiterai", "J'habiterai"], [PR[1], "habiteras", "Tu habiteras"], [PR[2], "habitera", "Il habitera"],
+                        [PR[3], "habiterons", "Nous habiterons"], [PR[4], "habiterez", "Vous habiterez"], [PR[5], "habiteront", "Ils habiteront"]
+                    ])
+                }
             },
             finir: {
                 infinitive: "finir", en: "to finish", type: "regular (-ir)",
-                forms: [
-                    { pron: "Je", conj: "finis", spoken: "Je finis", example: "Je finis le travail.", exEn: "I'm finishing the work." },
-                    { pron: "Tu", conj: "finis", spoken: "Tu finis", example: "Tu finis quand ?", exEn: "When do you finish?" },
-                    { pron: "Il/Elle", conj: "finit", spoken: "Il finit", example: "Elle finit son livre.", exEn: "She's finishing her book." },
-                    { pron: "Nous", conj: "finissons", spoken: "Nous finissons", example: "Nous finissons à 5h.", exEn: "We finish at 5." },
-                    { pron: "Vous", conj: "finissez", spoken: "Vous finissez", example: "Vous finissez bientôt.", exEn: "You finish soon." },
-                    { pron: "Ils/Elles", conj: "finissent", spoken: "Ils finissent", example: "Ils finissent vite.", exEn: "They finish quickly." }
-                ]
+                tenses: {
+                    present: _t([
+                        [PR[0], "finis", "Je finis", ["Je finis le travail.", "I'm finishing the work."]],
+                        [PR[1], "finis", "Tu finis", ["Tu finis quand ?", "When do you finish?"]],
+                        [PR[2], "finit", "Il finit", ["Elle finit son livre.", "She's finishing her book."]],
+                        [PR[3], "finissons", "Nous finissons", ["Nous finissons à 5h.", "We finish at 5."]],
+                        [PR[4], "finissez", "Vous finissez", ["Vous finissez bientôt.", "You finish soon."]],
+                        [PR[5], "finissent", "Ils finissent", ["Ils finissent vite.", "They finish quickly."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai fini", "J'ai fini"], [PR[1], "as fini", "Tu as fini"], [PR[2], "a fini", "Il a fini"],
+                        [PR[3], "avons fini", "Nous avons fini"], [PR[4], "avez fini", "Vous avez fini"], [PR[5], "ont fini", "Ils ont fini"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "finissais", "Je finissais"], [PR[1], "finissais", "Tu finissais"], [PR[2], "finissait", "Il finissait"],
+                        [PR[3], "finissions", "Nous finissions"], [PR[4], "finissiez", "Vous finissiez"], [PR[5], "finissaient", "Ils finissaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "finirai", "Je finirai"], [PR[1], "finiras", "Tu finiras"], [PR[2], "finira", "Il finira"],
+                        [PR[3], "finirons", "Nous finirons"], [PR[4], "finirez", "Vous finirez"], [PR[5], "finiront", "Ils finiront"]
+                    ])
+                }
+            },
+            partir: {
+                infinitive: "partir", en: "to leave", type: "irregular (-ir)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "pars", "Je pars", ["Je pars à 8h.", "I leave at 8."]],
+                        [PR[1], "pars", "Tu pars", ["Tu pars demain ?", "Are you leaving tomorrow?"]],
+                        [PR[2], "part", "Il part", ["Elle part en vacances.", "She's leaving on vacation."]],
+                        [PR[3], "partons", "Nous partons", ["Nous partons ensemble.", "We're leaving together."]],
+                        [PR[4], "partez", "Vous partez", ["Vous partez quand ?", "When are you leaving?"]],
+                        [PR[5], "partent", "Ils partent", ["Ils partent tôt.", "They leave early."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "suis parti(e)", "Je suis parti"], [PR[1], "es parti(e)", "Tu es parti"], [PR[2], "est parti(e)", "Il est parti"],
+                        [PR[3], "sommes parti(e)s", "Nous sommes partis"], [PR[4], "êtes parti(e)s", "Vous êtes partis"], [PR[5], "sont parti(e)s", "Ils sont partis"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "partais", "Je partais"], [PR[1], "partais", "Tu partais"], [PR[2], "partait", "Il partait"],
+                        [PR[3], "partions", "Nous partions"], [PR[4], "partiez", "Vous partiez"], [PR[5], "partaient", "Ils partaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "partirai", "Je partirai"], [PR[1], "partiras", "Tu partiras"], [PR[2], "partira", "Il partira"],
+                        [PR[3], "partirons", "Nous partirons"], [PR[4], "partirez", "Vous partirez"], [PR[5], "partiront", "Ils partiront"]
+                    ])
+                }
+            },
+            lire: {
+                infinitive: "lire", en: "to read", type: "irregular",
+                tenses: {
+                    present: _t([
+                        [PR[0], "lis", "Je lis", ["Je lis un livre.", "I'm reading a book."]],
+                        [PR[1], "lis", "Tu lis", ["Tu lis quoi ?", "What are you reading?"]],
+                        [PR[2], "lit", "Il lit", ["Elle lit le journal.", "She reads the newspaper."]],
+                        [PR[3], "lisons", "Nous lisons", ["Nous lisons en silence.", "We read in silence."]],
+                        [PR[4], "lisez", "Vous lisez", ["Vous lisez beaucoup.", "You read a lot."]],
+                        [PR[5], "lisent", "Ils lisent", ["Ils lisent des romans.", "They read novels."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "ai lu", "J'ai lu"], [PR[1], "as lu", "Tu as lu"], [PR[2], "a lu", "Il a lu"],
+                        [PR[3], "avons lu", "Nous avons lu"], [PR[4], "avez lu", "Vous avez lu"], [PR[5], "ont lu", "Ils ont lu"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "lisais", "Je lisais"], [PR[1], "lisais", "Tu lisais"], [PR[2], "lisait", "Il lisait"],
+                        [PR[3], "lisions", "Nous lisions"], [PR[4], "lisiez", "Vous lisiez"], [PR[5], "lisaient", "Ils lisaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "lirai", "Je lirai"], [PR[1], "liras", "Tu liras"], [PR[2], "lira", "Il lira"],
+                        [PR[3], "lirons", "Nous lirons"], [PR[4], "lirez", "Vous lirez"], [PR[5], "liront", "Ils liront"]
+                    ])
+                }
+            },
+            se_appeler: {
+                infinitive: "s'appeler", en: "to be named", type: "reflexive (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "m'appelle", "Je m'appelle", ["Je m'appelle Marie.", "My name is Marie."]],
+                        [PR[1], "t'appelles", "Tu t'appelles", ["Tu t'appelles comment ?", "What is your name?"]],
+                        [PR[2], "s'appelle", "Il s'appelle", ["Il s'appelle Paul.", "His name is Paul."]],
+                        [PR[3], "nous appelons", "Nous nous appelons", ["Nous nous appelons Dupont.", "Our name is Dupont."]],
+                        [PR[4], "vous appelez", "Vous vous appelez", ["Vous vous appelez comment ?", "What is your name?"]],
+                        [PR[5], "s'appellent", "Ils s'appellent", ["Ils s'appellent Léo et Léa.", "Their names are Léo and Léa."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "me suis appelé(e)", "Je me suis appelé"], [PR[1], "t'es appelé(e)", "Tu t'es appelé"], [PR[2], "s'est appelé(e)", "Il s'est appelé"],
+                        [PR[3], "nous sommes appelé(e)s", "Nous nous sommes appelés"], [PR[4], "vous êtes appelé(e)s", "Vous vous êtes appelés"], [PR[5], "se sont appelé(e)s", "Ils se sont appelés"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "m'appelais", "Je m'appelais"], [PR[1], "t'appelais", "Tu t'appelais"], [PR[2], "s'appelait", "Il s'appelait"],
+                        [PR[3], "nous appelions", "Nous nous appelions"], [PR[4], "vous appeliez", "Vous vous appeliez"], [PR[5], "s'appelaient", "Ils s'appelaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "m'appellerai", "Je m'appellerai"], [PR[1], "t'appelleras", "Tu t'appelleras"], [PR[2], "s'appellera", "Il s'appellera"],
+                        [PR[3], "nous appellerons", "Nous nous appellerons"], [PR[4], "vous appellerez", "Vous vous appellerez"], [PR[5], "s'appelleront", "Ils s'appelleront"]
+                    ])
+                }
+            },
+            se_lever: {
+                infinitive: "se lever", en: "to get up", type: "reflexive (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "me lève", "Je me lève", ["Je me lève tôt.", "I get up early."]],
+                        [PR[1], "te lèves", "Tu te lèves", ["Tu te lèves à quelle heure ?", "What time do you get up?"]],
+                        [PR[2], "se lève", "Il se lève", ["Elle se lève à 7h.", "She gets up at 7."]],
+                        [PR[3], "nous levons", "Nous nous levons", ["Nous nous levons tard.", "We get up late."]],
+                        [PR[4], "vous levez", "Vous vous levez", ["Vous vous levez tôt ?", "Do you get up early?"]],
+                        [PR[5], "se lèvent", "Ils se lèvent", ["Ils se lèvent à 6h.", "They get up at 6."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "me suis levé(e)", "Je me suis levé"], [PR[1], "t'es levé(e)", "Tu t'es levé"], [PR[2], "s'est levé(e)", "Il s'est levé"],
+                        [PR[3], "nous sommes levé(e)s", "Nous nous sommes levés"], [PR[4], "vous êtes levé(e)s", "Vous vous êtes levés"], [PR[5], "se sont levé(e)s", "Ils se sont levés"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "me levais", "Je me levais"], [PR[1], "te levais", "Tu te levais"], [PR[2], "se levait", "Il se levait"],
+                        [PR[3], "nous levions", "Nous nous levions"], [PR[4], "vous leviez", "Vous vous leviez"], [PR[5], "se levaient", "Ils se levaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "me lèverai", "Je me lèverai"], [PR[1], "te lèveras", "Tu te lèveras"], [PR[2], "se lèvera", "Il se lèvera"],
+                        [PR[3], "nous lèverons", "Nous nous lèverons"], [PR[4], "vous lèverez", "Vous vous lèverez"], [PR[5], "se lèveront", "Ils se lèveront"]
+                    ])
+                }
+            },
+            se_laver: {
+                infinitive: "se laver", en: "to wash oneself", type: "reflexive (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "me lave", "Je me lave", ["Je me lave le matin.", "I wash up in the morning."]],
+                        [PR[1], "te laves", "Tu te laves", ["Tu te laves les mains ?", "Are you washing your hands?"]],
+                        [PR[2], "se lave", "Il se lave", ["Elle se lave les cheveux.", "She washes her hair."]],
+                        [PR[3], "nous lavons", "Nous nous lavons", ["Nous nous lavons vite.", "We wash up quickly."]],
+                        [PR[4], "vous lavez", "Vous vous lavez", ["Vous vous lavez avec du savon.", "You wash with soap."]],
+                        [PR[5], "se lavent", "Ils se lavent", ["Ils se lavent après le sport.", "They wash up after sports."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "me suis lavé(e)", "Je me suis lavé"], [PR[1], "t'es lavé(e)", "Tu t'es lavé"], [PR[2], "s'est lavé(e)", "Il s'est lavé"],
+                        [PR[3], "nous sommes lavé(e)s", "Nous nous sommes lavés"], [PR[4], "vous êtes lavé(e)s", "Vous vous êtes lavés"], [PR[5], "se sont lavé(e)s", "Ils se sont lavés"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "me lavais", "Je me lavais"], [PR[1], "te lavais", "Tu te lavais"], [PR[2], "se lavait", "Il se lavait"],
+                        [PR[3], "nous lavions", "Nous nous lavions"], [PR[4], "vous laviez", "Vous vous laviez"], [PR[5], "se lavaient", "Ils se lavaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "me laverai", "Je me laverai"], [PR[1], "te laveras", "Tu te laveras"], [PR[2], "se lavera", "Il se lavera"],
+                        [PR[3], "nous laverons", "Nous nous laverons"], [PR[4], "vous laverez", "Vous vous laverez"], [PR[5], "se laveront", "Ils se laveront"]
+                    ])
+                }
+            },
+            se_coucher: {
+                infinitive: "se coucher", en: "to go to bed", type: "reflexive (-er)",
+                tenses: {
+                    present: _t([
+                        [PR[0], "me couche", "Je me couche", ["Je me couche à 11h.", "I go to bed at 11."]],
+                        [PR[1], "te couches", "Tu te couches", ["Tu te couches tard ?", "Do you go to bed late?"]],
+                        [PR[2], "se couche", "Il se couche", ["Elle se couche tôt.", "She goes to bed early."]],
+                        [PR[3], "nous couchons", "Nous nous couchons", ["Nous nous couchons à minuit.", "We go to bed at midnight."]],
+                        [PR[4], "vous couchez", "Vous vous couchez", ["Vous vous couchez quand ?", "When do you go to bed?"]],
+                        [PR[5], "se couchent", "Ils se couchent", ["Ils se couchent tard.", "They go to bed late."]]
+                    ]),
+                    passe_compose: _t([
+                        [PR[0], "me suis couché(e)", "Je me suis couché"], [PR[1], "t'es couché(e)", "Tu t'es couché"], [PR[2], "s'est couché(e)", "Il s'est couché"],
+                        [PR[3], "nous sommes couché(e)s", "Nous nous sommes couchés"], [PR[4], "vous êtes couché(e)s", "Vous vous êtes couchés"], [PR[5], "se sont couché(e)s", "Ils se sont couchés"]
+                    ]),
+                    imparfait: _t([
+                        [PR[0], "me couchais", "Je me couchais"], [PR[1], "te couchais", "Tu te couchais"], [PR[2], "se couchait", "Il se couchait"],
+                        [PR[3], "nous couchions", "Nous nous couchions"], [PR[4], "vous couchiez", "Vous vous couchiez"], [PR[5], "se couchaient", "Ils se couchaient"]
+                    ]),
+                    futur_simple: _t([
+                        [PR[0], "me coucherai", "Je me coucherai"], [PR[1], "te coucheras", "Tu te coucheras"], [PR[2], "se couchera", "Il se couchera"],
+                        [PR[3], "nous coucherons", "Nous nous coucherons"], [PR[4], "vous coucherez", "Vous vous coucherez"], [PR[5], "se coucheront", "Ils se coucheront"]
+                    ])
+                }
             }
         };
 
@@ -2371,7 +2906,8 @@
             } else if (sectionId === 'conjugation') {
                 if (!document.getElementById('conjugationContent').innerHTML.trim()) {
                     const sel = document.getElementById('verbSelect');
-                    showConjugation(sel ? sel.value : 'etre');
+                    const ts = document.getElementById('tenseSelect');
+                    showConjugation(sel ? sel.value : 'etre', ts ? ts.value : 'present');
                 }
             }
         }
@@ -2624,6 +3160,11 @@
         // ═══════════════════════════════════════════════════════
         // Conjugation viewer + practice
         // ═══════════════════════════════════════════════════════
+        function _currentTense() {
+            const ts = document.getElementById('tenseSelect');
+            return ts && ts.value in TENSES ? ts.value : 'present';
+        }
+
         function populateVerbSelect() {
             const sel = document.getElementById('verbSelect');
             if (!sel || sel.dataset.populated) return;
@@ -2632,14 +3173,19 @@
                 `<option value="${id}">${v.infinitive} — ${v.en}</option>`
             ).join('');
             sel.innerHTML = html;
-            sel.addEventListener('change', () => showConjugation(sel.value));
+            sel.addEventListener('change', () => showConjugation(sel.value, _currentTense()));
+            const tenseSel = document.getElementById('tenseSelect');
+            if (tenseSel) tenseSel.addEventListener('change', () => showConjugation(sel.value, tenseSel.value));
             const practiceBtn = document.getElementById('conjPracticeBtn');
-            if (practiceBtn) practiceBtn.onclick = () => startConjPractice(sel.value);
+            if (practiceBtn) practiceBtn.onclick = () => startConjPractice(sel.value, _currentTense());
         }
 
-        function showConjugation(verbId) {
+        function showConjugation(verbId, tense) {
             const verb = verbsData[verbId];
             if (!verb) return;
+            tense = (tense && verb.tenses[tense]) ? tense : 'present';
+            const forms = verb.tenses[tense];
+            const tInfo = TENSES[tense];
             const inf = escapeFr(verb.infinitive);
             let html = `
                 <div class="conj-card">
@@ -2649,10 +3195,15 @@
                         <div class="conj-english">${verb.en}</div>
                         <div class="conj-type">${verb.type}</div>
                     </div>
+                    <div class="conj-tense-bar">
+                        <div class="conj-tense-label">${tInfo.label}</div>
+                        <div class="conj-tense-sub">${tInfo.sub}</div>
+                    </div>
             `;
-            verb.forms.forEach(form => {
+            forms.forEach(form => {
                 const spk = escapeFr(form.spoken);
-                const ex = escapeFr(form.example);
+                const hasEx = !!form.example;
+                const ex = hasEx ? escapeFr(form.example) : '';
                 html += `
                     <div class="conj-row">
                         <div class="conj-row-main">
@@ -2660,36 +3211,41 @@
                             <div class="conj-form" onclick="speak('${spk}')">${form.conj}</div>
                             <button class="speak-btn" onclick="speak('${spk}', this)" aria-label="Listen to ${form.spoken}">🔊</button>
                         </div>
-                        <div class="conj-example-row">
-                            <div class="conj-example-text">
-                                <div class="conj-example-fr">${form.example}</div>
-                                <div class="conj-example-en">${form.exEn}</div>
+                        ${hasEx ? `
+                            <div class="conj-example-row">
+                                <div class="conj-example-text">
+                                    <div class="conj-example-fr">${form.example}</div>
+                                    <div class="conj-example-en">${form.exEn}</div>
+                                </div>
+                                <button class="speak-btn speak-btn-small" onclick="speak('${ex}', this)" aria-label="Listen to example">🔊</button>
                             </div>
-                            <button class="speak-btn speak-btn-small" onclick="speak('${ex}', this)" aria-label="Listen to example">🔊</button>
-                        </div>
+                        ` : ''}
                     </div>
                 `;
             });
             html += `
                 </div>
                 <div style="text-align: center; margin: 20px 0 30px;">
-                    <button class="btn btn-primary" onclick="startConjPractice('${verbId}')" style="padding: 14px 32px;">
-                        Practice ${verb.infinitive} →
+                    <button class="btn btn-primary" onclick="startConjPractice('${verbId}', '${tense}')" style="padding: 14px 32px;">
+                        Practice ${verb.infinitive} (${tInfo.label}) →
                     </button>
                 </div>
             `;
             document.getElementById('conjugationContent').innerHTML = html;
         }
 
-        let conjQuiz = { questions: [], index: 0, score: 0, verbId: null };
+        let conjQuiz = { questions: [], index: 0, score: 0, verbId: null, tense: 'present' };
 
-        function startConjPractice(verbId) {
+        function startConjPractice(verbId, tense) {
             const verb = verbsData[verbId];
             if (!verb) return;
+            tense = (tense && verb.tenses[tense]) ? tense : 'present';
+            const forms = verb.tenses[tense];
             conjQuiz.verbId = verbId;
+            conjQuiz.tense = tense;
             // Shuffle forms, then build a question per form
-            conjQuiz.questions = verb.forms.slice().sort(() => Math.random() - 0.5).map(form => {
-                const allConjs = verb.forms.map(f => f.conj);
+            conjQuiz.questions = forms.slice().sort(() => Math.random() - 0.5).map(form => {
+                const allConjs = forms.map(f => f.conj);
                 const wrongs = allConjs
                     .filter(c => c !== form.conj)
                     .filter((c, i, a) => a.indexOf(c) === i)
@@ -2707,7 +3263,6 @@
             conjQuiz.index = 0;
             conjQuiz.score = 0;
             displayConjQuestion();
-            // Scroll into view so user sees the quiz right away
             setTimeout(() => {
                 const el = document.getElementById('conjugationContent');
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2722,18 +3277,22 @@
             const q = conjQuiz.questions[conjQuiz.index];
             const isLast = conjQuiz.index >= conjQuiz.questions.length - 1;
             const progress = ((conjQuiz.index + 1) / conjQuiz.questions.length) * 100;
+            const tInfo = TENSES[conjQuiz.tense] || TENSES.present;
             let html = `
                 <div class="quiz-progress">
                     <div class="quiz-progress-bar" style="width: ${progress}%;"></div>
                 </div>
                 <div class="question">
+                    <div style="text-align: center; color: #E1000F; font-size: 0.85em; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                        ${tInfo.label}
+                    </div>
                     <h3 style="text-align: center; line-height: 1.5;">
                         Conjugate <strong style="color: #002395;">${q.inf}</strong> for <strong style="color: #E1000F;">${q.pron}</strong>
                     </h3>
                     <div class="options">
             `;
             q.options.forEach((opt, i) => {
-                html += `<button class="option-btn" style="text-align: center; font-size: 1.25em; font-weight: 600;" onclick="answerConjQuestion(${i})">${opt}</button>`;
+                html += `<button class="option-btn" style="text-align: center; font-size: 1.2em; font-weight: 600;" onclick="answerConjQuestion(${i})">${opt}</button>`;
             });
             html += `
                     </div>
@@ -2807,14 +3366,17 @@
             else if (pct >= 60) message = 'Good effort — keep practicing!';
             else message = 'Keep at it — conjugations take time.';
             const verbId = conjQuiz.verbId;
+            const tense = conjQuiz.tense;
+            const tInfo = TENSES[tense] || TENSES.present;
             const html = `
                 <div class="score-display">
                     <h2>Practice Complete!</h2>
+                    <p style="color: #666; margin: 6px 0 4px;">${verbsData[verbId].infinitive} · ${tInfo.label}</p>
                     <div class="score-value">${conjQuiz.score} / ${total}</div>
                     <p class="score-message">${pct}% — ${message}</p>
                     <div class="button-group">
-                        <button class="btn btn-secondary" onclick="showConjugation('${verbId}')">Review verb</button>
-                        <button class="btn btn-primary" onclick="startConjPractice('${verbId}')">Practice again</button>
+                        <button class="btn btn-secondary" onclick="showConjugation('${verbId}', '${tense}')">Review verb</button>
+                        <button class="btn btn-primary" onclick="startConjPractice('${verbId}', '${tense}')">Practice again</button>
                     </div>
                 </div>
             `;

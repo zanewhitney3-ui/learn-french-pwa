@@ -2316,7 +2316,7 @@
                     Pick an answer above
                 </div>
                 <div style="text-align: center; margin-top: 12px; margin-bottom: 30px;">
-                    <button id="quizNextBtn" class="btn btn-primary" disabled
+                    <button id="quizNextBtn" class="btn btn-primary" disabled onclick="advanceQuiz()"
                             style="font-size: 1.1em; padding: 16px 40px; width: 100%; max-width: 320px; opacity: 0.45; cursor: not-allowed;">
                         ${isLast ? 'See Score →' : 'Next Question →'}
                     </button>
@@ -2360,14 +2360,13 @@
                 feedback.textContent = isCorrect ? '✓ Correct!' : '✗ Correct answer: ' + q.options[q.correct];
             }
 
-            // Activate the (already-rendered) Next button
+            // Activate the (already-rendered) Next button — inline onclick already wired
             const nextBtn = document.getElementById('quizNextBtn');
             if (nextBtn) {
                 nextBtn.disabled = false;
                 nextBtn.style.opacity = '1';
                 nextBtn.style.cursor = 'pointer';
                 nextBtn.classList.add('quiz-next-pulse');
-                nextBtn.onclick = advanceQuiz;
                 setTimeout(() => {
                     try { nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
                 }, 100);
@@ -2381,12 +2380,14 @@
 
         function displayQuizResults() {
             const total = quizQuestions.length;
-            const percentage = Math.round((quizScore / total) * 100);
-            if (typeof Progress !== 'undefined' && total > 0) {
-                Progress.incrementQuizzesPassed();
-                Progress.addXP(5);
-                Progress.markTopicStudied(currentTopic);
-            }
+            const percentage = total > 0 ? Math.round((quizScore / total) * 100) : 0;
+            try {
+                if (typeof Progress !== 'undefined' && total > 0) {
+                    Progress.incrementQuizzesPassed();
+                    Progress.addXP(5);
+                    Progress.markTopicStudied(currentTopic);
+                }
+            } catch(e) { console.log('Progress tracking error:', e); }
 
             let message = '';
             if (percentage === 100) {
